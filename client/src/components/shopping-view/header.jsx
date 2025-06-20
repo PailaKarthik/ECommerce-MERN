@@ -20,7 +20,7 @@ import {
   DropdownMenuItem,
 } from "../ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
-import { logoutUser } from "@/store/auth-slice";
+import {  resetTokenAndCredentials } from "@/store/auth-slice";
 import UserCartWrapper from "./cart-wrapper";
 import { fetchCartItems } from "@/store/shop/cart-slice";
 import { Link, useNavigate, useLocation } from "react-router-dom";
@@ -88,7 +88,10 @@ const HeaderRightContent = ({ user }) => {
   const { cartItems } = useSelector((state) => state.shoppingCart);
 
   const handleLogout = () => {
-    dispatch(logoutUser());
+    // dispatch(logoutUser());
+    dispatch(resetTokenAndCredentials());
+    sessionStorage.clear();
+    navigate("/auth/login");
   };
 
   useEffect(() => {
@@ -106,7 +109,9 @@ const HeaderRightContent = ({ user }) => {
           className="relative bg-gray-900 md:hover:bg-gray-800 text-orange-100 "
         >
           {cartItems?.items?.length > 0 && (
-            <div className="absolute top-0 right-0 text-[10px] font-semibold text-gray-100 bg-orange-400 rounded-full w-3.5">{cartItems?.items?.length}</div>
+            <div className="absolute top-0 right-0 text-[10px] font-semibold text-gray-100 bg-orange-400 rounded-full w-3.5">
+              {cartItems?.items?.length}
+            </div>
           )}
 
           <ShoppingCart className="w-5 h-5" />
@@ -170,7 +175,7 @@ const ShoppingHeader = () => {
             ECommerce
           </span>
         </Link>
-        <Sheet  open={openMenuSheet} onOpenChange={setOpenMenuSheet}>
+        <Sheet open={openMenuSheet} onOpenChange={setOpenMenuSheet}>
           <SheetTrigger asChild>
             <Button className="lg:hidden bg-gray-900 hover:bg-gray-800 shadow-sm shadow-gray-600">
               <Menu />
