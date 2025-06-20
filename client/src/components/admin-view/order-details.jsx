@@ -17,7 +17,6 @@ const initialFormData = {
 };
 
 const AdminOrderDetails = ({ orderDetails }) => {
-  const { user } = useSelector((state) => state.auth);
   const [formData, setFormData] = useState(initialFormData);
   const dispatch = useDispatch();
 
@@ -131,7 +130,8 @@ const AdminOrderDetails = ({ orderDetails }) => {
             <div className="font-medium">Shipping info</div>
             <div className="grid gap-0.5 text-gray-300">
               <span>
-                Name : <span className="text-gray-400">{user.username}</span>
+                Name :{" "}
+                <span className="text-gray-400">{orderDetails?.userName}</span>
               </span>
               <span>
                 Address :{" "}

@@ -8,6 +8,7 @@ const { buildClient } = require("../../helpers/paypal");
 const Order = require("../../models/Orders");
 const Cart = require("../../models/Cart");
 const Product = require("../../models/Product");
+const User = require("../../models/User");
 
 const ordersController = new OrdersController(buildClient());
 
@@ -79,9 +80,13 @@ const createOrder = async (req, res) => {
       console.warn("No PayPal approval URL returned for order:", payPalOrderId);
     }
 
+    const user = await User.findById(userId);
+    console.log(user)
+    const userName = user.username;
     // Persist Order: store PayPal Order ID in paymentId initially
     const newOrder = new Order({
       userId,
+      userName: userName,
       cartId: cartId,
       cartItems: cartItems.map((item) => ({
         productId: item.productId,
