@@ -11,7 +11,7 @@ export const addProductReview = createAsyncThunk(
   async (data) => {
     // Make API request
     const response = await axios.post(
-      "http://localhost:5000/api/shop/review/add",
+      `${import.meta.env.VITE_API_URL}/api/shop/review/add`,
       data
     );
 
@@ -23,7 +23,7 @@ export const getProductReviews = createAsyncThunk(
   async (productId) => {
     // Make API request
     const response = await axios.get(
-      `http://localhost:5000/api/shop/review/${productId}`
+      `${import.meta.env.VITE_API_URL}/api/shop/review/${productId}`
     );
 
     return response.data;

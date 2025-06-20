@@ -16,7 +16,7 @@ export const fetchAllFilteredProducts = createAsyncThunk(
       sortBy: sortParams,
     });
     const response = await axios.get(
-      `http://localhost:5000/api/shop/products/get?${query}`
+      `${import.meta.env.VITE_API_URL}/api/shop/products/get?${query}`
     );
 
     return response.data;
@@ -28,7 +28,7 @@ export const fetchProductDetails = createAsyncThunk(
   async (productId) => {
     // Make API request
     const response = await axios.get(
-      `http://localhost:5000/api/shop/products/get/${productId}`
+      `${import.meta.env.VITE_API_URL}/api/shop/products/get/${productId}`
     );
 
     return response.data;
@@ -39,9 +39,9 @@ const ShopProductsSlice = createSlice({
   name: "shoppingProducts",
   initialState,
   reducers: {
-    setProductDetails : (state) => {
+    setProductDetails: (state) => {
       state.productDetails = null;
-    }
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -49,23 +49,25 @@ const ShopProductsSlice = createSlice({
         state.isLoading = true;
       })
       .addCase(fetchAllFilteredProducts.fulfilled, (state, action) => {
-        console.log("52",action.payload.data);
+        console.log("52", action.payload.data);
         state.isLoading = false;
         state.productList = action.payload.data;
       })
       .addCase(fetchAllFilteredProducts.rejected, (state) => {
         state.isLoading = false;
         state.productList = [];
-      }).addCase(fetchProductDetails.pending, (state) => {
+      })
+      .addCase(fetchProductDetails.pending, (state) => {
         state.isLoading = true;
-      }).addCase(fetchProductDetails.fulfilled, (state, action) => {
+      })
+      .addCase(fetchProductDetails.fulfilled, (state, action) => {
         state.isLoading = false;
         state.productDetails = action.payload.data;
-      }).addCase(fetchProductDetails.rejected, (state) => {
+      })
+      .addCase(fetchProductDetails.rejected, (state) => {
         state.isLoading = false;
         state.productDetails = null;
       });
-
   },
 });
 
