@@ -64,14 +64,14 @@ const MenuItems = ({ setOpen }) => {
   };
 
   return (
-    <nav className="mt-4 lg:mt-0 flex flex-col lg:flex-row text-gray-200 ">
+    <nav className="mt-4 lg:mt-0 flex flex-col lg:flex-row text-gray-200 lg:gap-2">
       {shoppingViewHeaderMenuItems.map((menuItem) => (
         <div
           key={menuItem.id}
           onClick={() => handleNavigateToListingPage(menuItem)}
           className={`${
             activeItem === menuItem.id ? "bg-gray-700 lg:rounded-md" : ""
-          } hover:bg-gray-700 p-2 cursor-pointer border-b lg:border-0 border-gray-500 flex justify-between`}
+          } p-2 cursor-pointer border-b lg:border-0 border-gray-500 flex justify-between`}
         >
           {menuItem.label}
           <span className="lg:hidden">⇢</span>
