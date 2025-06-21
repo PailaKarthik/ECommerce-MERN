@@ -146,10 +146,6 @@ ECommerce-MERN/
 └── client/      # React app with components, pages, contexts, services
 ```
 
-## 📜 License
-
-Licensed under MIT. See [LICENSE](LICENSE).
-
 ## 📬 Contact
 
 Built by **Paila Karthik**. Feedback welcome via GitHub issues or PRs.
