@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogTitle } from "../ui/dialog";
 import { Button } from "../ui/button";
-import { Heading1, ShoppingCart, Star } from "lucide-react";
+import { Heading1, ShoppingCart, Star, MessageSquareMore } from "lucide-react";
 import { Separator } from "../ui/separator";
 import { Avatar, AvatarFallback } from "../ui/avatar";
 import { Input } from "../ui/input";
@@ -12,14 +12,9 @@ import { Label } from "../ui/label";
 import StarRatingComponent from "../common/star-rating";
 import { toast } from "sonner";
 import { addProductReview, getProductReviews } from "@/store/shop/review-slice";
-import { MessageSquareMore } from "lucide-react";
 
-const ProductDetailsDailog = ({
-  open,
-  setOpen,
-  productDetails,
-  handleAddToCart,
-}) => {
+const ProductDetailsDialog = ({ open, setOpen, productDetails, handleAddToCart }) => {
+  const [size, setSize] = useState(null);
   const [reviewMsg, setReviewMsg] = useState("");
   const [rating, setRating] = useState(0);
   const { cartItems } = useSelector((state) => state.shoppingCart);
@@ -27,238 +22,182 @@ const ProductDetailsDailog = ({
   const { productReviews } = useSelector((state) => state.shoppingReview);
   const dispatch = useDispatch();
 
+  // Initialize or reset size when productDetails change
+  useEffect(() => {
+    if (productDetails) {
+      // If both pantSizes and tshirtSizes are unavailable ("-"), set size to "-"
+      console.log(productDetails.pantSizes, productDetails.tshirtSizes, "check")
+      if (productDetails.pantSizes === "-" && productDetails.tshirtSizes === "-") {
+        setSize("-");
+      } else {
+        // Reset to null so user can enter
+        setSize(null);
+      }
+      // Fetch reviews
+      dispatch(getProductReviews(productDetails._id));
+    }
+  }, [productDetails, dispatch]);
+
   const handleRatingChange = (getRating) => {
     setRating(getRating);
   };
 
   const checkItemInCart = (productId) => {
-    let getCartItems = cartItems.items || [];
-    return getCartItems.some((item) => item._id === productId);
+    const items = cartItems.items || [];
+    return items.some((item) => item._id === productId);
   };
 
-  const handleDailogClose = () => {
+  const handleDialogClose = () => {
     setOpen(false);
     dispatch(setProductDetails());
     setRating(0);
     setReviewMsg("");
+    setSize(null);
   };
 
   const handleAddReview = () => {
     if (rating === 0) {
-      toast("give rating in starts", {
-        icon: "❌",
-        duration: 2000,
-        position: "top-center",
-        style: {
-          backgroundColor: "black",
-          color: "white",
-        },
-      });
+      toast("Please provide a star rating.", { icon: "❌", duration: 2000, position: "top-center" });
       return;
     }
 
     dispatch(
       addProductReview({
-        productId: productDetails?._id,
-        userId: user?.id,
-        userName: user?.username,
+        productId: productDetails._id,
+        userId: user.id,
+        userName: user.username,
         reviewMessage: reviewMsg,
         reviewValue: rating,
       })
     ).then((data) => {
-      if (data?.payload?.success) {
-        dispatch(getProductReviews(productDetails?._id));
-        toast("Review added successfully!", {
-          icon: "❌",
-          duration: 2000,
-          position: "top-center",
-          style: {
-            backgroundColor: "black",
-            color: "white",
-          },
-        });
+      if (data.payload.success) {
+        dispatch(getProductReviews(productDetails._id));
+        toast("Review added successfully!", { icon: "✅", duration: 2000, position: "top-center" });
         setRating(0);
         setReviewMsg("");
       } else {
-        console.log(data?.payload);
-        toast("You either not bought or already reviewed this product", {
-          icon: "❌",
-          duration: 3000,
-          position: "top-center",
-          style: {
-            backgroundColor: "black",
-            color: "white",
-          },
-        });
+        toast("You either haven't purchased or already reviewed this product.", { icon: "❌", duration: 3000, position: "top-center" });
       }
     });
   };
 
-  useEffect(() => {
-    if (productDetails !== null) {
-      dispatch(getProductReviews(productDetails?._id));
-    }
-  }, [productDetails, dispatch]);
-
+  // Calculate average rating
   const averageRating =
     productReviews && productReviews.length > 0
-      ? productReviews.reduce(
-          (sum, reviewItem) => sum + reviewItem.reviewValue,
-          0
-        ) / productReviews.length
+      ? productReviews.reduce((sum, r) => sum + r.reviewValue, 0) / productReviews.length
       : 0;
 
-  console.log("reviews", productReviews);
-
+  console.log(size)
   return (
-    <Dialog open={open} onOpenChange={handleDailogClose}>
-      <DialogContent className="bg-gray-800 border-gray-600 text-gray-100 grid md:grid-cols-2 gap-8 sm:p-12 max-w-[90vw] sm:max-w-[80vw] lg:max-w-[70vw] max-h-[90vh] overflow-y-auto ">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5, ease: "easeOut" }}
-          className="relative overflow-hidden rounded-lg shadow-lg"
-        >
-          <img
-            src={productDetails?.image}
-            alt={productDetails?.title}
-            width={600}
-            height={600}
-            className="aspect-square w-full object-cover object-top"
-          />
+    <Dialog open={open} onOpenChange={handleDialogClose}>
+      <DialogContent className="bg-gray-800 border-gray-600 text-gray-100 grid md:grid-cols-2 gap-8 p-6 lg:min-w-[70vw] max-w-[90vw] max-h-[90vh] overflow-y-auto">
+        <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.5 }} className="rounded-lg overflow-hidden shadow-lg">
+          <img src={productDetails?.image} alt={productDetails?.title} className="w-full h-auto object-cover" />
         </motion.div>
-        <div className="flex flex-col gap-3 justify-center">
+
+        <div className="flex flex-col gap-4">
           <div>
-            <DialogTitle className="text-3xl font-extrabold">
-              {productDetails?.title}
-            </DialogTitle>
-            <p className="text-gray-400 text-sm mt-2">
-              {productDetails?.description}
-            </p>
+            <DialogTitle className="text-3xl font-bold">{productDetails?.title}</DialogTitle>
+            <p className="text-gray-400 mt-2">{productDetails?.description}</p>
           </div>
 
-          <div className="flex items-center gap-3 text-gray-400">
-            <span className="text-sm capitalize">
-              <span className="text-gray-300 font-semibold">Category :</span>{" "}
-              {productDetails?.category}
-            </span>
-            <span className="text-sm capitalize">
-              <span className="text-gray-300 font-semibold">Brand :</span>
-              {productDetails?.brand}
-            </span>
+          <div className="flex gap-4 text-gray-400">
+            <span><strong>Category:</strong> {productDetails?.category}</span>
+            <span><strong>Brand:</strong> {productDetails?.brand}</span>
           </div>
 
-          <div className="flex gap-2 mb-2">
-            {productDetails?.sellPrice > 0 && (
-              <span className={`text-lg font-bold text-green-400`}>
-                ₹{productDetails?.sellPrice}.00
-              </span>
+          <div className="flex items-baseline gap-2">
+            {productDetails?.sellPrice > 0 && <span className="text-green-400 font-bold text-xl">₹{productDetails.sellPrice}.00</span>}
+            <span className={`${productDetails?.sellPrice > 0 ? 'line-through text-gray-500' : ''} text-lg`}>₹{productDetails?.price}.00</span>
+          </div>
+
+          <div className="space-y-4">
+            {productDetails?.pantSizes !== "-" && (
+              <div className="flex flex-col gap-1">
+                <span>Available Pant Sizes : <span className="font-extrabold text-orange-100">{productDetails && productDetails.pantSizes}</span></span>
+                <Input
+                  type="text"
+                  value={size || ''}
+                  onChange={(e) => setSize(e.target.value)}
+                  placeholder="Enter size"
+                  className="border-gray-500"
+                />
+              </div>
             )}
-            <span
-              className={`text-lg text-gray-400 ${
-                productDetails?.sellPrice > 0 &&
-                "line-through text-muted-foreground"
-              }`}
-            >
-              ₹{productDetails?.price}.00
-            </span>
+            {productDetails?.tshirtSizes !== "-" && (
+              <div className="flex flex-col gap-1">
+                <span>Available T-Shirt Sizes : <span className="font-extrabold text-orange-100">{productDetails && productDetails.tshirtSizes}</span></span>
+                <Input
+                  type="text"
+                  value={size || ''}
+                  onChange={(e) => setSize(e.target.value)}
+                  placeholder="Enter size"
+                  className="border-gray-500"
+                />
+              </div>
+            )}
+            {productDetails?.pantSizes === "-" && productDetails?.tshirtSizes === "-" && (
+              <div className="text-gray-400">Size: -</div>
+            )}
           </div>
 
-          <div className="flex items-center">
+          <div className="flex items-center gap-2">
             <StarRatingComponent rating={averageRating} />
-            <p className="ml-1 text-yellow-300">{averageRating.toFixed(2)}</p>
+            <span className="text-yellow-300 ml-1">{averageRating.toFixed(2)}</span>
           </div>
 
-          <div className="mb-4">
+          <div>
             {productDetails?.quantity === 0 ? (
-              <Button className="w-full bg-gray-700 opacity-50 cursor-not-allowed hover:bg-gray-600 text-gray-200 font-semibold py-2 px-4 rounded-md transition-colors duration-200 flex items-center justify-center gap-2">
-                Out of Stock
-              </Button>
+              <Button disabled className="w-full opacity-50">Out of Stock</Button>
             ) : (
               <Button
-                onClick={() =>
-                  handleAddToCart(productDetails?._id, productDetails?.quantity)
-                }
-                className="w-full bg-gray-700 hover:bg-gray-600 text-gray-200 font-semibold py-2 px-4 rounded-md transition-colors duration-200 flex items-center justify-center gap-2"
+                onClick={() => handleAddToCart(productDetails._id, productDetails.quantity, size)}
+                className="w-full flex items-center justify-center gap-2"
               >
                 <ShoppingCart size={18} />
-                {checkItemInCart(productDetails?._id)
-                  ? "Added to Cart "
-                  : "Add to Cart"}
+                {productDetails && checkItemInCart(productDetails._id) ? "Added to Cart" : "Add to Cart"}
               </Button>
             )}
-
-            <span className="text-gray-600 text-sm">
-              {checkItemInCart(productDetails?._id) &&
-                "If you click above button still the quantity increase."}
-            </span>
           </div>
 
           <Separator />
 
           <div>
-            <h2 className="font-bold mb-2 text-orange-100 text-lg">Reviews</h2>
-
-            <div className="pr-5 max-h-[200px] overflow-auto flex flex-col gap-6">
-              {productReviews && productReviews.length > 0 ? (
-                productReviews.map((review, index) => (
-                  <div
-                    key={index}
-                    className="flex gap-3 border-b-1 pb-2 border-gray-600"
-                  >
-                    <Avatar className="w-10 h-10 border">
-                      <AvatarFallback className="text-gray-100 font-bold bg-gray-700">
-                        {review.userName.toUpperCase()[0]}
-                      </AvatarFallback>
+            <h2 className="text-lg font-bold mb-2">Reviews</h2>
+            <div className="max-h-48 overflow-auto space-y-4">
+              {productReviews.length > 0 ? (
+                productReviews.map((review, idx) => (
+                  <div key={idx} className="flex gap-3 pb-2 border-b border-gray-600">
+                    <Avatar className="w-10 h-10">
+                      <AvatarFallback className="text-gray-700 font-extrabold text-xl">{review.userName.toUpperCase().charAt(0)}</AvatarFallback>
                     </Avatar>
-                    <div className="flex-1 flex flex-col gap-1">
-                      <div className="flex justify-between items-center">
-                        <h3 className="font-bold capitalize">
-                          {review.userName}
-                        </h3>
-                        <p className="text-gray-300">
-                          {review.updatedAt
-                            .split("T")[0]
-                            .split("-")
-                            .reverse()
-                            .join("/")}
-                        </p>
+                    <div className="flex-1">
+                      <div className="flex justify-between">
+                        <h3 className="font-semibold capitalize">{review.userName}</h3>
+                        <span className="text-sm text-gray-400">
+                          {new Date(review.updatedAt).toLocaleDateString()}
+                        </span>
                       </div>
-                      <div className="flex">
-                        <StarRatingComponent rating={review.reviewValue} />
-                      </div>
-                      <MessageSquareMore className="w-4 h-4 mt-2" />
-                      <div className="flex items-center text-gray-400 gap-1">
-                        <span>{review.reviewMessage}</span>
-                      </div>
+                      <StarRatingComponent rating={review.reviewValue} />
+                      <MessageSquareMore className="w-4 h-4 mt-2 text-gray-400" />
+                      <p className="text-gray-300 mt-1">{review.reviewMessage}</p>
                     </div>
                   </div>
                 ))
               ) : (
-                <h1 className="text-gray-300">No reviews</h1>
+                <p className="text-gray-500">No reviews yet.</p>
               )}
-              <Separator />
             </div>
-            <div className="mt-5 flex flex-col mb-4 gap-2">
+
+            <div className="mt-4 space-y-2">
               <Label>Write a Review</Label>
-              <div className="flex gap-0.5">
-                <StarRatingComponent
-                  rating={rating}
-                  handleRatingChange={handleRatingChange}
-                />
-              </div>
+              <StarRatingComponent rating={rating} handleRatingChange={handleRatingChange} />
               <Input
-                name="reviewMsg"
                 value={reviewMsg}
                 onChange={(e) => setReviewMsg(e.target.value)}
-                className="border-gray-500"
-                placeholder="write a review..."
+                placeholder="Write your review..."
               />
-              <Button
-                onClick={handleAddReview}
-                disabled={reviewMsg.trim() === ""}
-                className="bg-gray-700 hover:bg-gray-600 cursor-pointer"
-              >
+              <Button onClick={handleAddReview} disabled={!reviewMsg.trim()}>
                 Submit
               </Button>
             </div>
@@ -269,4 +208,4 @@ const ProductDetailsDailog = ({
   );
 };
 
-export default ProductDetailsDailog;
+export default ProductDetailsDialog;

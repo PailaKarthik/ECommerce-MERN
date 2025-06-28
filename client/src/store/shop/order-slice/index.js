@@ -2,7 +2,11 @@ import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import axios from "axios";
 
 const initialState = {
-  approvalURL: null,
+  // we no longer use approvalURL
+  razorpayOrderId: null,
+  amount: null,
+  currency: null,
+
   isLoading: false,
   orderId: null,
   orderList: [],
@@ -22,10 +26,10 @@ export const createNewOrder = createAsyncThunk(
 
 export const capturePayment = createAsyncThunk(
   "/order/capturePayment",
-  async ({ orderId, payerId }) => {
+  async ({ orderId, razorpayPaymentId, razorpaySignature, razorpayOrderId }) => {
     const response = await axios.post(
       `${import.meta.env.VITE_API_URL}/api/shop/order/capture`,
-      { orderId, payerId }
+      { orderId, razorpayPaymentId, razorpaySignature, razorpayOrderId }
     );
     return response.data;
   }
@@ -61,23 +65,36 @@ const shoppingOrderSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
+      // create
       .addCase(createNewOrder.pending, (state) => {
         state.isLoading = true;
       })
-      .addCase(createNewOrder.fulfilled, (state, action) => {
+      .addCase(createNewOrder.fulfilled, (state, { payload }) => {
+        console.log(payload)
         state.isLoading = false;
-        state.approvalURL = action.payload.approveURL;
-        state.orderId = action.payload.orderId;
-        sessionStorage.setItem(
-          "currentOrderId",
-          JSON.stringify(action.payload.orderId)
-        );
+        state.orderId         = payload.orderId;
+        state.razorpayOrderId = payload.razorpayOrderId;
+        state.amount          = payload.amount;
+        state.currency        = payload.currency;
+        sessionStorage.setItem("currentOrderId", JSON.stringify(payload.orderId));
       })
       .addCase(createNewOrder.rejected, (state) => {
         state.isLoading = false;
-        state.approvalURL = null;
         state.orderId = null;
       })
+
+      // capture
+      .addCase(capturePayment.pending, (state) => {
+        state.isLoading = true;
+      })
+      .addCase(capturePayment.fulfilled, (state) => {
+        state.isLoading = false;
+      })
+      .addCase(capturePayment.rejected, (state) => {
+        state.isLoading = false;
+      })
+
+      // list & detail unchanged...
       .addCase(getAllOrdersByUser.pending, (state) => {
         state.isLoading = true;
       })

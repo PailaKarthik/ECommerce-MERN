@@ -119,7 +119,7 @@ const App = () => {
           element: <PaypalReturnPage />,
         },
         {
-          path: "payment-success",
+          path: "razorpay-success",
           element: <PaymentSuccessPage />,
         },
         {

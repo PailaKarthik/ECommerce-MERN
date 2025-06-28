@@ -8,13 +8,15 @@ const initialState = {
 
 export const addToCart = createAsyncThunk(
   "cart/addToCart",
-  async ({ userId, productId, quantity }) => {
+  async ({ userId, productId, quantity,size }) => {
+    console.log("from-slice",size)
     const response = await axios.post(
       `${import.meta.env.VITE_API_URL}/api/shop/cart/add`,
       {
         userId,
         productId,
         quantity,
+        size
       }
     );
     return response.data;

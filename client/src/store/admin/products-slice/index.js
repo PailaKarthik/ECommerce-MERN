@@ -40,6 +40,7 @@ export const editProduct = createAsyncThunk(
   "/products/addnewproduct",
   async ({ id, formData }) => {
     // Make API request
+    console.log("formDatafromEdit",formData);
     const response = await axios.put(
       `${import.meta.env.VITE_API_URL}/api/admin/products/edit/${id}`,
       formData,

@@ -34,7 +34,6 @@ const UserCartItemsContent = ({ cartItem, mode }) => {
 
   console.log(productList, "productList");
   const handleUpdateQuantity = (getCartItem, quantityChange) => {
-    
     if (quantityChange == 1) {
       let indexOfCurrentItem = productList.findIndex(
         (item) => item._id === getCartItem?.productId
@@ -125,6 +124,13 @@ const UserCartItemsContent = ({ cartItem, mode }) => {
               <Plus className="w-4 h-4" />
               <span className="sr-only">Increase</span>
             </Button>
+          </div>
+          <div>
+            {cartItem && cartItem.size === "-" ? (
+              ""
+            ) : (
+              <div className="mt-2 font-bold text-gray-200">Size : {cartItem.size}</div>
+            )}
           </div>
         </div>
         <div className="flex flex-col items-center sm:items-end">

@@ -9,12 +9,14 @@ import shoppingOrderSlice from "./shop/order-slice";
 import shoppingSearchSlice from "./shop/search-slice";
 import shoppingReviewSlice from "./shop/review-slice";
 import commonFeatureImageSlice from "./common/image-upload-slice";
+import adminSearchSlice from "./admin/search-slice"
 
 const store = configureStore({
   reducer: {
     auth: authReducer,
     adminProducts: adminProductSlice,
     adminOrders: adminOrderSlice,
+    adminSearch : adminSearchSlice,
     shoppingProducts: shoppingProductsSlice,
     shoppingCart: shoppingCartSlice,
     shoppingAddress: shoppingAddressSlice,

@@ -9,9 +9,15 @@ const ShoppingProductTile = ({
   handleGetProductDetails,
   handleAddToCart,
 }) => {
+  // Decide default size: '-' if both pant and tshirt sizes are unavailable
+  const defaultSize =
+    product.pantSizes === "-" && product.tshirtSizes === "-"
+      ? "-"
+      : null;
+
   return (
     <Card className="py-0 w-full max-w-sm mx-auto bg-gray-800 text-gray-200 border-1 border-gray-700 shadow-gray-700 shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden group cursor-pointer">
-      <div onClick={() => handleGetProductDetails(product?._id)}>
+      <div onClick={() => handleGetProductDetails(product._id)}>
         <div className="relative h-[300px] overflow-hidden">
           <img
             src={product?.image}
@@ -67,7 +73,9 @@ const ShoppingProductTile = ({
           </Button>
         ) : (
           <Button
-            onClick={() => handleAddToCart(product?._id, product?.quantity)}
+            onClick={() =>
+              handleAddToCart(product._id, product.quantity, defaultSize)
+            }
             className="w-full bg-gray-700 hover:bg-gray-600 text-gray-200 font-semibold py-2 px-4 rounded-md transition-colors duration-200 flex items-center justify-center gap-2"
           >
             <ShoppingCart size={18} />

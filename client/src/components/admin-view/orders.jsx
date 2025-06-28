@@ -12,29 +12,27 @@ import { Button } from "../ui/button";
 import { Dialog } from "../ui/dialog";
 import AdminOrderDetails from "./order-details";
 import { useDispatch, useSelector } from "react-redux";
-import { getAllOrdersForAdmin } from "@/store/admin/orders-slice";
 import {
-  resetOrderDetails,
+  getAllOrdersForAdmin,
   getOrderDetailsForAdmin,
+  resetOrderDetails,
 } from "@/store/admin/orders-slice";
 import { motion } from "framer-motion";
 import { SquareArrowOutUpRight } from "lucide-react";
 import { Badge } from "../ui/badge";
 
 const AdminOrdersList = () => {
-  const [openOrderDetailsDialog, setOpenOrderDetailsDailog] = useState(false);
+  const [openOrderDetailsDialog, setOpenOrderDetailsDialog] = useState(false);
   const { orderList, orderDetails } = useSelector((state) => state.adminOrders);
-
   const dispatch = useDispatch();
 
   const handleFetchOrderDetails = (id) => {
-    console.log(id);
     dispatch(getOrderDetailsForAdmin(id));
   };
 
   useEffect(() => {
     if (orderDetails !== null) {
-      setOpenOrderDetailsDailog(true);
+      setOpenOrderDetailsDialog(true);
     }
   }, [orderDetails]);
 
@@ -42,23 +40,20 @@ const AdminOrdersList = () => {
     dispatch(getAllOrdersForAdmin());
   }, [dispatch]);
 
-  console.log(orderList);
-  console.log(orderDetails);
-
   return (
     <motion.div
       initial={{ opacity: 20, y: -20 }}
       animate={{ opacity: 100, y: 0 }}
       transition={{ duration: 0.6 }}
     >
-      <Card className="mt-4 bg-gray-800 text-gray-200 border-0 shadow-sm shadow-gray-500">
+      <Card className="mt-4 bg-gray-800 text-gray-200 border-0 shadow-sm shadow-gray-500 max-h-[80vh] overflow-y-auto">
         <CardHeader>
           <CardTitle>All Orders</CardTitle>
         </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
+        <CardContent className="p-4">
+          <Table className="table-fixed w-full">
+            <TableHeader className="table-fixed w-full sticky top-0 z-10 bg-gray-800">
+              <TableRow className="table-fixed w-full">
                 <TableHead className="text-gray-200">Order ID</TableHead>
                 <TableHead className="text-gray-200">Order Date</TableHead>
                 <TableHead className="text-gray-200">Order Status</TableHead>
@@ -66,13 +61,10 @@ const AdminOrdersList = () => {
                 <TableHead className="sr-only"></TableHead>
               </TableRow>
             </TableHeader>
-            <TableBody>
+            <TableBody className="table-fixed w-full">
               {orderList && orderList.length > 0
-                ? orderList.map((order, index) => (
-                    <TableRow
-                      className="text-gray-300 border-gray-700"
-                      key={index}
-                    >
+                ? orderList.map((order) => (
+                    <TableRow key={order._id} className="table-fixed w-full  border-b-gray-700">
                       <TableCell>{order._id}</TableCell>
                       <TableCell>
                         {order.orderDate
@@ -105,15 +97,15 @@ const AdminOrdersList = () => {
                         <Dialog
                           open={openOrderDetailsDialog}
                           onOpenChange={() => {
-                            setOpenOrderDetailsDailog(false);
+                            setOpenOrderDetailsDialog(false);
                             dispatch(resetOrderDetails());
                           }}
                         >
                           <Button
-                            onClick={() => handleFetchOrderDetails(order?._id)}
+                            onClick={() => handleFetchOrderDetails(order._id)}
                             className="bg-gray-900"
                           >
-                            view Details <SquareArrowOutUpRight />{" "}
+                            view Details <SquareArrowOutUpRight />
                           </Button>
                           {orderDetails && (
                             <AdminOrderDetails orderDetails={orderDetails} />

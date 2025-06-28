@@ -17,6 +17,7 @@ const UserCartWrapper = ({ cartItems, setOpenCartSheet }) => {
       0
     );
 
+    console.log(cartItems);
   return (
     <SheetContent className="sm:max-w-md bg-gray-900 text-gray-200 border-gray-700 max-h-screen flex flex-col">
       {/* Header / Title */}

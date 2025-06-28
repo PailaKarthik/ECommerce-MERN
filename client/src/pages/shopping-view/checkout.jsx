@@ -5,96 +5,90 @@ import { useDispatch, useSelector } from "react-redux";
 import UserCartItemsContent from "@/components/shopping-view/cart-content";
 import { Button } from "@/components/ui/button";
 import { IndianRupee } from "lucide-react";
-import { createNewOrder } from "@/store/shop/order-slice";
+import { createNewOrder, capturePayment } from "@/store/shop/order-slice";
 import { toast } from "sonner";
 
 const ShoppingCheckout = () => {
   const { cartItems } = useSelector((state) => state.shoppingCart);
   const { user } = useSelector((state) => state.auth);
+  const {  isLoading } = useSelector(
+    (state) => state.shoppingOrders
+  );
+
   const [currentSelectedAddress, setCurrentSelectedAddress] = useState(null);
   const dispatch = useDispatch();
-  const [isPaymentStart, setIsPaymentStart] = useState(false);
-  const { approvalURL } = useSelector((state) => state.shoppingOrders);
 
-  console.log("current selected address", currentSelectedAddress);
   const totalCartAmount =
-    cartItems &&
-    cartItems.items &&
-    cartItems.items.length > 0 &&
-    cartItems.items.reduce(
+    cartItems?.items?.reduce(
       (acc, curr) =>
         acc +
         (curr.sellPrice > 0 ? curr.sellPrice : curr.price) * curr.quantity,
       0
-    );
+    ) || 0;
 
-  console.log("cart Id", cartItems?._id);
-  const handleInitiatePaypalPayment = () => {
-    if (currentSelectedAddress === null) {
-      toast("Please Select One Address to Proceed", {
-        icon: "❌",
-        duration: 2000,
-        position: "top-center",
-        style: {
-          backgroundColor: "black",
-          color: "white",
-        },
-      });
-      return;
+  const handlePayment = async () => {
+    if (!currentSelectedAddress) {
+      return toast("Please select an address", { icon: "❌" });
+    }
+    if (!cartItems?.items?.length) {
+      return toast("Your cart is empty", { icon: "🥲" });
     }
 
-    if (cartItems.length === 0) {
-      toast("Your Cart is Empty", {
-        icon: "🥲",
-        duration: 2000,
-        position: "top-center",
-        style: {
-          backgroundColor: "black",
-          color: "white",
+    // 1) create order on backend
+    const payload  = await dispatch(
+      createNewOrder({
+        userId: user?.id,
+        cartId: cartItems?._id,
+        cartItems: cartItems.items.map((item) => ({
+          productId: item.productId,
+          title: item.title,
+          image: item.image,
+          price: item.sellPrice > 0 ? item.sellPrice : item.price,
+          quantity: item.quantity,
+          size : item.size
+        })),
+        addressInfo: {
+          addressId: currentSelectedAddress._id,
+          address: currentSelectedAddress.address,
+          city: currentSelectedAddress.city,
+          pincode: currentSelectedAddress.pincode,
+          phone: currentSelectedAddress.phone,
+          notes: currentSelectedAddress.notes,
         },
-      });
-      return;
-    }
-
-    const orderData = {
-      userId: user?.id,
-      cartId: cartItems?._id,
-      cartItems: cartItems.items.map((item) => ({
-        productId: item?.productId,
-        title: item?.title,
-        image: item?.image,
-        price: item?.sellPrice > 0 ? item?.sellPrice : item?.price,
-        quantity: item?.quantity,
-      })),
-      addressInfo: {
-        addressId: currentSelectedAddress?._id,
-        address: currentSelectedAddress?.address,
-        city: currentSelectedAddress?.city,
-        pincode: currentSelectedAddress?.pincode,
-        phone: currentSelectedAddress?.phone,
-        notes: currentSelectedAddress?.notes,
+        totalAmount: totalCartAmount,
+      })
+    ).unwrap();
+    
+    console.log(payload)
+    // 2) configure and open Razorpay
+    const options = {
+      key: import.meta.env.VITE_RAZORPAY_KEY_ID,
+      amount: payload.amount,         // paise
+      currency: payload.currency,     // “INR”
+      order_id: payload.razorpayOrderId,
+      handler: async (resp) => {
+        // 3) capture on backend
+        await dispatch(
+          capturePayment({
+            orderId: payload.orderId,
+            razorpayPaymentId: resp.razorpay_payment_id,
+            razorpaySignature: resp.razorpay_signature,
+            razorpayOrderId: resp.razorpay_order_id,
+          })
+        ).unwrap();
+        // 4) navigate to a confirmation page:
+        window.location.href = `/shop/razorpay-success`;
       },
-      orderStatus: "pending",
-      paymentMethod: "paypal",
-      paymentStatus: "pending",
-      totalAmount: totalCartAmount,
-      orderDate: new Date(),
-      orderUpdateDate: new Date(),
+      modal: {
+        ondismiss: () => toast("Payment cancelled", { icon: "⚠️" }),
+      },
+      prefill: {
+        name: user.name,
+        email: user.email,
+      },
     };
-
-    dispatch(createNewOrder(orderData)).then((data) => {
-      console.log(data, "karthik");
-      if (data?.payload?.success) {
-        setIsPaymentStart(true);
-      } else {
-        setIsPaymentStart(false);
-      }
-    });
+    new window.Razorpay(options).open();
   };
-
-  if (approvalURL) {
-    window.location.href = approvalURL;
-  }
 
   return (
     <div className="flex flex-col">
@@ -107,48 +101,36 @@ const ShoppingCheckout = () => {
       <div className="bg-gray-900 grid grid-cols-1 sm:grid-cols-2 gap-2 p-2 lg:p-5">
         <ShopAddress setCurrentSelectedAddress={setCurrentSelectedAddress} />
         <div className="flex flex-col gap-4 p-5 ">
-          {cartItems &&
-            cartItems.items &&
-            cartItems.items.length > 0 &&
-            cartItems.items.map((cartItem, index) => (
-              <UserCartItemsContent
-                key={index}
-                cartItem={cartItem}
-                mode="dark"
-              />
-            ))}
+          {cartItems?.items?.map((cartItem, i) => (
+            <UserCartItemsContent
+              key={i}
+              cartItem={cartItem}
+              mode="dark"
+            />
+          ))}
           <div className="mt-4 p-4 shadow-sm shadow-gray-500 rounded bg-gray-800">
             <div className="flex justify-between">
               <span className="font-bold text-lg text-gray-200">Total</span>
               <span className="font-bold text-green-400 text-lg">
-                ₹{totalCartAmount || 0}.00
+                ₹{totalCartAmount}.00
               </span>
             </div>
           </div>
           <div className="mt-4">
             <Button
-              onClick={handleInitiatePaypalPayment}
+              onClick={handlePayment}
               className="w-full bg-gray-700 hover:bg-gray-600"
+              disabled={isLoading}
             >
-              {isPaymentStart ? (
-                "Processing Paypal Payment...."
-              ) : (
-                <div className="flex gap-1 items-center">
-                  <IndianRupee />
-                  Checkout with
-                  <span className="text-blue-200 font-bold">Paypal </span>
-                </div>
-              )}
+              {isLoading
+                ? "Processing…"
+                : (
+                  <div className="flex items-center gap-2">
+                    <IndianRupee /> Checkout with Razorpay
+                  </div>
+                )
+              }
             </Button>
-          </div>
-          <div className="text-gray-500 text-center">
-            <h3>Login With these Credentitials for Paypal testing</h3>
-            <p>
-              Email : <span>sb-ir343h43743406@personal.example.com</span>
-            </p>
-            <p>
-              password : <span>vK=0KPuK</span>
-            </p>
           </div>
         </div>
       </div>

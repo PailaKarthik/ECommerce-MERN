@@ -6,7 +6,7 @@ const {
   capturePayment,
   getAllOrdersByUser,
   getOrderDetails,
-} = require("../../controllers/shop/order-controller");
+} = require("../../controllers/shop/razorpayController");
 
 router.post("/create", createOrder);
 router.post("/capture", capturePayment);

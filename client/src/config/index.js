@@ -65,9 +65,9 @@ export const addProductFormElements = [
     type: "select",
     placeholder: "Select Product Category",
     options: [
+      { id: "clothing", label: "Clothing" },
+      { id: "combo", label: "Combo" },
       { id: "men", label: "Men" },
-      { id: "women", label: "Women" },
-      { id: "kids", label: "Kids" },
       { id: "accessories", label: "Accessories" },
       { id: "electronics", label: "Electronics" },
       { id: "footwear", label: "Footwear" },
@@ -80,17 +80,34 @@ export const addProductFormElements = [
     type: "select",
     placeholder: "Enter Product Brand",
     options: [
-      { id: "adidas", label: "Adidas" },
-      { id: "puma", label: "Puma" },
-      { id: "nike", label: "Nike" },
-      { id: "reebok", label: "Reebok" },
-      { id: "vans", label: "Vans" },
-      { id: "levi", label: "Levi" },
-      { id: "zara", label: "Zara" },
-      { id: "patagonia", label: "Patagonia" },
-      { id: "other", label: "Other" },
+      { id: "massey", label: "Massey" },
+      { id: "linonfeel", label: "Linon Feel" },
+      { id: "manwill", label: "Manwill" },
+      { id: "jockey", label: "Jockey" },
+      { id: "siyaram", label: "Siyaram" },
+      { id: "raymond", label: "Raymond" },
+      { id: "ramraj", label: "RamRaj" },
+      { id: "sambodi", label: "Sambodi" },
+      { id: "murarka", label: "Murarka" },
+      { id: "solino", label: "Solino" },
+      { id: "urbanInspire", label: "Urban Inspire" },
+      { id: "others", label: "Others" },
     ],
     componentType: "select",
+  },
+  {
+    label: "Tshirt-Sizes",
+    name: "tshirtSizes",
+    type: "text",
+    placeholder: "Enter Tshirts sizes with ',' separated. like L,M,",
+    componentType: "textarea",
+  },
+  {
+    label: "Pant-Sizes",
+    name: "pantSizes",
+    type: "text",
+    placeholder: "Enter Pant sizes with ',' separated. like 26,28,30",
+    componentType: "textarea",
   },
   {
     label: "Price",
@@ -99,6 +116,7 @@ export const addProductFormElements = [
     placeholder: "Enter Product Price",
     componentType: "input",
   },
+
   {
     label: "Sell Price",
     name: "sellPrice",
@@ -127,18 +145,18 @@ export const shoppingViewHeaderMenuItems = [
     path: "/shop/listing",
   },
   {
+    id: "clothing",
+    label: "Clothing",
+    path: "/shop/listing",
+  },
+  {
+    id: "combo",
+    label: "Combo",
+    path: "/shop/listing",
+  },
+  {
     id: "men",
     label: "Men",
-    path: "/shop/listing",
-  },
-  {
-    id: "women",
-    label: "Women",
-    path: "/shop/listing",
-  },
-  {
-    id: "kids",
-    label: "Kids",
     path: "/shop/listing",
   },
   {
@@ -165,20 +183,25 @@ export const shoppingViewHeaderMenuItems = [
 
 export const filterOptions = {
   category: [
+    { id: "clothing", label: "Clothing" },
+    { id: "combo", label: "Combo" },
     { id: "men", label: "Men" },
-    { id: "women", label: "Women" },
-    { id: "kids", label: "Kids" },
     { id: "accessories", label: "Accessories" },
     { id: "electronics", label: "Electronics" },
     { id: "footwear", label: "Footwear" },
   ],
   brand: [
-    { id: "adidas", label: "Adidas" },
-    { id: "puma", label: "Puma" },
-    { id: "nike", label: "Nike" },
-    { id: "reebok", label: "Reebok" },
-    { id: "levi", label: "Levi" },
-    { id: "zara", label: "Zara" },
+    { id: "massey", label: "Massey" },
+    { id: "linonfeel", label: "Linon Feel" },
+    { id: "manwill", label: "Manwill" },
+    { id: "jockey", label: "Jockey" },
+    { id: "siyaram", label: "Siyaram" },
+    { id: "raymond", label: "Raymond" },
+    { id: "ramraj", label: "RamRaj" },
+    { id: "sambodi", label: "Sambodi" },
+    { id: "murarka", label: "Murarka" },
+    { id: "solino", label: "Solino" },
+    { id: "urbanInspire", label: "Urban Inspire" },
   ],
 };
 
@@ -191,37 +214,37 @@ export const sortOptions = [
 
 export const addressFormControls = [
   {
-    label : "Address",
-    name : "address",
-    componentType : "input",
-    type : "text",
-    placeholder : "Enter your address"
+    label: "Address",
+    name: "address",
+    componentType: "input",
+    type: "text",
+    placeholder: "Enter your address",
   },
   {
-    label : "City",
-    name : "city",
-    componentType : "input",
-    type : "text",
-    placeholder : "Enter your City"
+    label: "City",
+    name: "city",
+    componentType: "input",
+    type: "text",
+    placeholder: "Enter your City",
   },
   {
-    label : "PinCode",
-    name : "pincode",
-    componentType : "input",
-    type : "text",
-    placeholder : "Enter your pincode"
+    label: "PinCode",
+    name: "pincode",
+    componentType: "input",
+    type: "text",
+    placeholder: "Enter your pincode",
   },
   {
-    label : "Phone",
-    name : "phone",
-    componentType : "input",
-    type : "text",
-    placeholder : "Enter your phone number"
+    label: "Phone",
+    name: "phone",
+    componentType: "input",
+    type: "text",
+    placeholder: "Enter your phone number",
   },
   {
-    label : "Notes",
-    name : "notes",
-    componentType : "textarea",
-    placeholder : "Enter your additional notes"
+    label: "Notes",
+    name: "notes",
+    componentType: "textarea",
+    placeholder: "Enter your additional notes",
   },
-]
+];

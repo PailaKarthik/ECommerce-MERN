@@ -7,11 +7,12 @@ const productSchema = new mongoose.Schema(
     description: String,
     category: String,
     brand: String,
+    tshirtSizes: String,
+    pantSizes: String,
     price: Number,
     sellPrice: Number,
     sold: Number,
     quantity: Number,
-    averageReview: Number,
   },
   { timestamps: true }
 );

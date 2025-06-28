@@ -118,6 +118,7 @@ const AdminOrderDetails = ({ orderDetails }) => {
                   <ul key={index} className="grid gap-3">
                     <li className="flex items-center justify-between text-gray-300">
                       <span>Title: {product.title}</span>
+                      <span>Size: {product.size}</span>
                       <span>Quantity : {product.quantity}</span>
                       <span>Price : ₹{product.price}</span>
                     </li>

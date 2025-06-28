@@ -21,6 +21,20 @@ import {
   WandSparklesIcon,
   Component,
   SplitIcon,
+  ShoppingBag,
+  Feather,
+  Tag,
+  Fan,
+  Shirt,
+  Castle,
+  LandPlot,
+  Star,
+  Sun,
+  Hexagon,
+  Building,
+  Puzzle,
+  GalleryVerticalEnd,
+  Swords,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { motion } from "framer-motion";
@@ -50,18 +64,23 @@ const ShoppingHome = () => {
   const navigate = useNavigate();
 
   const brandsWithIcon = [
-    { id: "adidas", label: "Adidas", icon: LeafIcon },
-    { id: "puma", label: "Puma", icon: GaugeIcon },
-    { id: "nike", label: "Nike", icon: CheckIcon },
-    { id: "reebok", label: "Reebok", icon: TriangleDashedIcon },
-    { id: "levi", label: "Levi", icon: TreePalmIcon },
-    { id: "zara", label: "Zara", icon: WandSparklesIcon },
+    { id: "massey", label: "Massey", icon: ShoppingBag },
+    { id: "linonfeel", label: "Linon Feel", icon: Feather },
+    { id: "manwill", label: "Manwill", icon: Tag },
+    { id: "jockey", label: "Jockey", icon: Fan },
+    { id: "siyaram", label: "Siyaram", icon: Shirt },
+    { id: "raymond", label: "Raymond", icon: Castle },
+    { id: "ramraj", label: "RamRaj", icon: LandPlot },
+    { id: "sambodi", label: "Sambodi", icon: Star },
+    { id: "murarka", label: "Murarka", icon: Sun },
+    { id: "solino", label: "Solino", icon: Hexagon },
+    { id: "urbanInspire", label: "Urban Inspire", icon: Building },
   ];
 
   const categoriesWithIcon = [
+    { id: "clothing", label: "Clothing", icon: GalleryVerticalEnd },
+    { id: "combo", label: "Combo", icon: Swords },
     { id: "men", label: "Men", icon: Mars },
-    { id: "women", label: "Women", icon: Venus },
-    { id: "kids", label: "Kids", icon: Baby },
     { id: "accessories", label: "Accessories", icon: Glasses },
     { id: "electronics", label: "Electronics", icon: Plug },
     { id: "footwear", label: "Footwear", icon: Footprints },
@@ -92,9 +111,21 @@ const ShoppingHome = () => {
     dispatch(fetchProductDetails(productId));
   };
 
-  const handleAddToCart = (productId) => {
+  const handleAddToCart = (productId, q, size) => {
     console.log("Add to cart clicked for product ID:", productId, user);
-    dispatch(addToCart({ userId: user?.id, productId, quantity: 1 })).then(
+    console.log(q);
+    console.log("home-size", size);
+    if (size === null) {
+      toast(`enter the size of the product`, {
+        icon: "❌",
+        duration: 2000,
+        position: "top-center",
+        style: { backgroundColor: "black", color: "white" },
+      });
+      return;
+    }
+
+    dispatch(addToCart({ userId: user?.id, productId, quantity: 1 ,size : size})).then(
       (response) => {
         console.log("Product added to cart:", response);
         if (response.payload?.success) {

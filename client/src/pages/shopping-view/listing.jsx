@@ -87,12 +87,19 @@ const ShoppingLists = () => {
 
     const newSort = parseSortFromSearch();
     setSort((prev) => (prev !== newSort ? newSort : prev));
-  }, [location.search, location.pathname, parseFiltersFromSearch, parseSortFromSearch]);
+  }, [
+    location.search,
+    location.pathname,
+    parseFiltersFromSearch,
+    parseSortFromSearch,
+  ]);
 
   // Fetch products when filters or sort change
   useEffect(() => {
     if (location.pathname !== "/shop/listing") return;
-    dispatch(fetchAllFilteredProducts({ filterParams: filters, sortParams: sort }));
+    dispatch(
+      fetchAllFilteredProducts({ filterParams: filters, sortParams: sort })
+    );
 
     // Save current filters to sessionStorage for persistence
     const toSave = {};
@@ -176,7 +183,8 @@ const ShoppingLists = () => {
     dispatch(fetchProductDetails(productId));
   };
 
-  const handleAddToCart = (productId, getTotalStock) => {
+  const handleAddToCart = (productId, getTotalStock, size) => {
+    console.log("size",size);
     let items = cartItems.items || [];
     if (items.length) {
       const idx = items.findIndex((item) => item.productId == productId);
@@ -193,7 +201,16 @@ const ShoppingLists = () => {
         }
       }
     }
-    dispatch(addToCart({ userId: user?.id, productId, quantity: 1 })).then(
+    if (size === null) {
+      toast(`enter the size of the product`, {
+        icon: "❌",
+        duration: 2000,
+        position: "top-center",
+        style: { backgroundColor: "black", color: "white" },
+      });
+      return;
+    }
+    dispatch(addToCart({ userId: user?.id, productId, quantity: 1,size : size })).then(
       (response) => {
         if (response.payload?.success) {
           dispatch(fetchCartItems({ userId: user?.id }));
@@ -239,10 +256,7 @@ const ShoppingLists = () => {
                 align="end"
                 className="w-[200px] bg-gray-700"
               >
-                <DropdownMenuRadioGroup
-                  value={sort}
-                  onValueChange={handleSort}
-                >
+                <DropdownMenuRadioGroup value={sort} onValueChange={handleSort}>
                   {sortOptions.map((option) => (
                     <DropdownMenuRadioItem
                       key={option.id}
@@ -274,12 +288,12 @@ const ShoppingLists = () => {
           ))}
         </motion.div>
 
-        <ProductDetailsDailog
+        {productDetails && <ProductDetailsDailog
           handleAddToCart={handleAddToCart}
           open={openDetailsDailog}
           setOpen={setOpenDetailsDailog}
           productDetails={productDetails}
-        />
+        />}
       </div>
     </div>
   );

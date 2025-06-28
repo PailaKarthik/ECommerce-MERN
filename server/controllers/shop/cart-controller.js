@@ -3,7 +3,8 @@ const Product = require("../../models/Product");
 
 const addToCart = async (req, res) => {
   try {
-    const { userId, productId, quantity } = req.body;
+    const { userId, productId, quantity,size } = req.body;
+    console.log(size)
 
     if (!userId || !productId || quantity <= 0) {
       return res.status(400).json({
@@ -32,7 +33,7 @@ const addToCart = async (req, res) => {
     if (existingItemIndex > -1) {
       cart.items[existingItemIndex].quantity += quantity;
     } else {
-      cart.items.push({ productId, quantity });
+      cart.items.push({ productId, quantity,size});
     }
 
     await cart.save();
@@ -95,6 +96,7 @@ const fetchCartItems = async (req, res) => {
       price: item.productId.price,
       sellPrice: item.productId.sellPrice,
       quantity: item.quantity,
+      size : item.size,
     }));
 
     // Return exactly as before, but now items[].productId is populated object
@@ -160,6 +162,7 @@ const updateCartItemQuantity = async (req, res) => {
       price: item.productId ? item.productId.price : null,
       sellPrice: item.productId ? item.productId.sellPrice : null,
       quantity: item.quantity,
+      size : item.size ? item.size : ""
     }));
 
     return res.status(200).json({
@@ -224,6 +227,7 @@ const deleteCartItem = async (req, res) => {
       price: item.productId ? item.productId.price : null,
       sellPrice: item.productId ? item.productId.sellPrice : null,
       quantity: item.quantity,
+      size : item.size ? item.size : ""
     }));
 
     return res.status(200).json({

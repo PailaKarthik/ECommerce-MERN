@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, Fragment } from "react";
 import { Button } from "../../components/ui/button";
 import {
   Sheet,
@@ -7,7 +7,6 @@ import {
   SheetTitle,
 } from "../../components/ui/sheet";
 import { CopyPlus } from "lucide-react";
-import { Fragment } from "react";
 import CommonForm from "../../components/common/form";
 import { addProductFormElements } from "../../config";
 import ProductImageUpload from "@/components/admin-view/image-upload";
@@ -18,9 +17,15 @@ import {
   editProduct,
   deleteProduct,
 } from "@/store/admin/products-slice";
-import { toast } from "sonner";
 import AdminProductTile from "@/components/admin-view/product-tile";
+import {
+  getSearchResults,
+  resetSearchResults,
+} from "@/store/admin/search-slice";
 import { motion } from "framer-motion";
+import { useSearchParams } from "react-router";
+import { toast } from "sonner";
+import { Input } from "@/components/ui/input";
 
 const initialFormData = {
   image: null,
@@ -28,37 +33,57 @@ const initialFormData = {
   description: "",
   category: "Men",
   brand: "",
+  tshirtSizes:"",
+  pantSizes : "",
   quantity: 0,
   price: 0,
   sellPrice: 0,
 };
 
 const AdminProducts = () => {
+  const [keyword, setKeyword] = useState("");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const { searchResults } = useSelector((state) => state.adminSearch);
   const [openAddProducts, setOpenAddProducts] = useState(false);
   const [formData, setFormData] = useState(initialFormData);
   const [imageFile, setImageFile] = useState(null);
   const [uploadedImageUrl, setImageUploadedUrl] = useState("");
   const [imageLoadingState, setImageLoadingState] = useState(false);
   const [currentEditedId, setCurrentEditedId] = useState(null);
-
   const { productList } = useSelector((state) => state.adminProducts);
   const dispatch = useDispatch();
 
+  useEffect(() => {
+    if (keyword.trim() !== "") {
+      const timer = setTimeout(() => {
+        setSearchParams(new URLSearchParams(`?keyword=${keyword}`));
+        dispatch(getSearchResults(keyword));
+      }, 1000);
+      return () => clearTimeout(timer);
+    } else {
+      setSearchParams(new URLSearchParams());
+      dispatch(resetSearchResults());
+    }
+  }, [keyword, setSearchParams, dispatch]);
+
+  useEffect(() => {
+    dispatch(fetchAllProducts());
+  }, [dispatch]);
+
+  const displayList = keyword.trim() !== "" ? searchResults : productList;
+
+  console.log("displaylist",displayList);
   function onSubmit(e) {
     e.preventDefault();
-    // Add product logic here
     if (currentEditedId !== null) {
       dispatch(editProduct({ id: currentEditedId, formData })).then(
         (response) => {
-          console.log("Product edited:", response);
+          console.log("responseOfEditproduct",response)
           toast(response?.payload?.message, {
             icon: "✅",
             duration: 3000,
             position: "top-center",
-            style: {
-              backgroundColor: "black",
-              color: "white",
-            },
+            style: { backgroundColor: "black", color: "white" },
           });
           dispatch(fetchAllProducts());
           setFormData(initialFormData);
@@ -69,15 +94,12 @@ const AdminProducts = () => {
     } else {
       dispatch(addNewProduct({ ...formData, image: uploadedImageUrl })).then(
         (response) => {
-          console.log("Product added:", response);
+          console.log(response)
           toast(response?.payload?.message, {
             icon: "✅",
             duration: 3000,
             position: "top-center",
-            style: {
-              backgroundColor: "black",
-              color: "white",
-            },
+            style: { backgroundColor: "black", color: "white" },
           });
           dispatch(fetchAllProducts());
           setFormData(initialFormData);
@@ -91,39 +113,41 @@ const AdminProducts = () => {
 
   const handleDeleteProduct = (id) => {
     dispatch(deleteProduct(id)).then((response) => {
-      console.log("Product deleted:", response);
       toast(response?.payload?.message, {
         icon: "✅",
         duration: 3000,
         position: "top-center",
-        style: {
-          backgroundColor: "black",
-          color: "white",
-        },
+        style: { backgroundColor: "black", color: "white" },
       });
       dispatch(fetchAllProducts());
     });
   };
 
-  const isFormValid = () => {
-    return Object.keys(formData)
+  const isFormValid = () =>
+    Object.keys(formData)
       .map((key) => formData[key] !== "")
       .every((value) => value);
-  };
 
-  useEffect(() => {
-    dispatch(fetchAllProducts());
-  }, [dispatch]);
   console.log("Product List:", productList);
 
   return (
     <motion.div
-    initial = {{opacity : 20, y:-20}}
-    animate = {{opacity : 100 , y:0}}
-    transition={{duration:0.6}}
+      initial={{ opacity: 20, y: -20 }}
+      animate={{ opacity: 100, y: 0 }}
+      transition={{ duration: 0.6 }}
     >
       <Fragment>
-        <div className="mb-5 w-full flex justify-end">
+        <div className="mb-5 w-full flex justify-between">
+          <div className="flex justify-center mb-8">
+            <div className="w-full flex items-center">
+              <Input
+                value={keyword}
+                onChange={(e) => setKeyword(e.target.value)}
+                className="py-6 border-gray-400"
+                placeholder="Search Products...."
+              />
+            </div>
+          </div>
           <Button
             onClick={() => setOpenAddProducts(true)}
             className="shadow-xl rounded-lg bg-gray-800 hover:bg-gray-900"
@@ -132,9 +156,14 @@ const AdminProducts = () => {
             Add New Product
           </Button>
         </div>
-        <div className="grid gap-4 grid-cols md:grid-cols-3 lg:grid-cols-4">
-          {productList &&
-            productList?.map((product) => (
+
+        {keyword.trim() !== "" && displayList.length === 0 ? (
+          <p className="text-center text-gray-500">
+            No results found for "{keyword}"
+          </p>
+        ) : (
+          <div className="grid gap-4 grid-cols md:grid-cols-3 lg:grid-cols-4">
+            {displayList.map((product) => (
               <AdminProductTile
                 setFormData={setFormData}
                 setOpenAddProducts={setOpenAddProducts}
@@ -144,7 +173,9 @@ const AdminProducts = () => {
                 product={product}
               />
             ))}
-        </div>
+          </div>
+        )}
+
         <Sheet
           open={openAddProducts}
           onOpenChange={() => {
