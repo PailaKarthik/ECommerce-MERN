@@ -4,6 +4,7 @@ const connecToDB = require("./database/db");
 const cookieParser = require("cookie-parser");
 const cors = require("cors");
 const authRouter = require("./routes/auth/auth-route");
+const bannerRoutes = require("./routes/common/images");
 const adminProductRouter = require("./routes/admin/products-routes");
 const adminOrderRouter = require("./routes/admin/order-routes");
 const adminSearchRouter = require('./routes/admin/search-routes')
@@ -13,7 +14,6 @@ const shopAddressRouter = require("./routes/shop-views/address-routes");
 const shopOrderRouter = require("./routes/shop-views/order-routes");
 const shopSearchRouter = require("./routes/shop-views/search-routes");
 const shopReviewRouter = require("./routes/shop-views/review-routes");
-const commonFeatureImagesRouter = require("./routes/common/feature-routes");
 
 const app = express();
 connecToDB();
@@ -37,6 +37,7 @@ app.use(
 app.use(cookieParser());
 app.use(express.json());
 app.use("/api/auth", authRouter);
+app.use("/api/common/images", bannerRoutes);
 app.use("/api/admin/products", adminProductRouter);
 app.use("/api/admin/orders", adminOrderRouter);
 app.use("/api/admin/search", adminSearchRouter);
@@ -48,7 +49,6 @@ app.use("/api/shop/order", shopOrderRouter);
 app.use("/api/shop/search", shopSearchRouter);
 app.use("/api/shop/review", shopReviewRouter);
 
-app.use("/api/common/images", commonFeatureImagesRouter);
 
 const PORT = process.env.PORT || 5000;
 

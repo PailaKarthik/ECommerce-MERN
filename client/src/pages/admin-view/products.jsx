@@ -9,7 +9,7 @@ import {
 import { CopyPlus } from "lucide-react";
 import CommonForm from "../../components/common/form";
 import { addProductFormElements } from "../../config";
-import ProductImageUpload from "@/components/admin-view/image-upload";
+import MultiImageUpload from "@/components/admin-view/MultiImageUpload";
 import { useDispatch, useSelector } from "react-redux";
 import {
   addNewProduct,
@@ -28,13 +28,13 @@ import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 
 const initialFormData = {
-  image: null,
+  images: [],
   title: "",
   description: "",
   category: "Men",
   brand: "",
-  tshirtSizes:"",
-  pantSizes : "",
+  tshirtSizes: "",
+  pantSizes: "",
   quantity: 0,
   price: 0,
   sellPrice: 0,
@@ -43,178 +43,171 @@ const initialFormData = {
 const AdminProducts = () => {
   const [keyword, setKeyword] = useState("");
   const [searchParams, setSearchParams] = useSearchParams();
-  const { searchResults } = useSelector((state) => state.adminSearch);
-  const [openAddProducts, setOpenAddProducts] = useState(false);
+  const { searchResults } = useSelector((s) => s.adminSearch);
+  const [open, setOpen] = useState(false);
   const [formData, setFormData] = useState(initialFormData);
-  const [imageFile, setImageFile] = useState(null);
-  const [uploadedImageUrl, setImageUploadedUrl] = useState("");
-  const [imageLoadingState, setImageLoadingState] = useState(false);
-  const [currentEditedId, setCurrentEditedId] = useState(null);
-  const { productList } = useSelector((state) => state.adminProducts);
+  const [urls, setUrls] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [editId, setEditId] = useState(null);
+  const { productList } = useSelector((s) => s.adminProducts);
   const dispatch = useDispatch();
 
   useEffect(() => {
-    if (keyword.trim() !== "") {
-      const timer = setTimeout(() => {
+    if (keyword.trim()) {
+      const t = setTimeout(() => {
         setSearchParams(new URLSearchParams(`?keyword=${keyword}`));
         dispatch(getSearchResults(keyword));
       }, 1000);
-      return () => clearTimeout(timer);
+      return () => clearTimeout(t);
     } else {
-      setSearchParams(new URLSearchParams());
       dispatch(resetSearchResults());
+      setSearchParams(new URLSearchParams());
     }
-  }, [keyword, setSearchParams, dispatch]);
+  }, [keyword, dispatch, setSearchParams]);
 
   useEffect(() => {
     dispatch(fetchAllProducts());
   }, [dispatch]);
 
-  const displayList = keyword.trim() !== "" ? searchResults : productList;
-
-  console.log("displaylist",displayList);
-  function onSubmit(e) {
-    e.preventDefault();
-    if (currentEditedId !== null) {
-      dispatch(editProduct({ id: currentEditedId, formData })).then(
-        (response) => {
-          console.log("responseOfEditproduct",response)
-          toast(response?.payload?.message, {
-            icon: "✅",
-            duration: 3000,
-            position: "top-center",
-            style: { backgroundColor: "black", color: "white" },
-          });
-          dispatch(fetchAllProducts());
-          setFormData(initialFormData);
-          setOpenAddProducts(false);
-          setCurrentEditedId(null);
-        }
-      );
-    } else {
-      dispatch(addNewProduct({ ...formData, image: uploadedImageUrl })).then(
-        (response) => {
-          console.log(response)
-          toast(response?.payload?.message, {
-            icon: "✅",
-            duration: 3000,
-            position: "top-center",
-            style: { backgroundColor: "black", color: "white" },
-          });
-          dispatch(fetchAllProducts());
-          setFormData(initialFormData);
-          setImageFile(null);
-          setImageUploadedUrl("");
-          setOpenAddProducts(false);
-        }
-      );
+  useEffect(() => {
+    if (editId) {
+      // Ensure we have proper image data for editing
+      const imageUrls = formData.images || [];
+      setUrls(imageUrls);
     }
-  }
+  }, [editId, formData.images]);
 
-  const handleDeleteProduct = (id) => {
-    dispatch(deleteProduct(id)).then((response) => {
-      toast(response?.payload?.message, {
-        icon: "✅",
-        duration: 3000,
-        position: "top-center",
-        style: { backgroundColor: "black", color: "white" },
-      });
-      dispatch(fetchAllProducts());
+  const list = keyword.trim() ? searchResults : productList;
+
+  const resetAll = () => {
+    dispatch(fetchAllProducts());
+    setFormData(initialFormData);
+    setUrls([]);
+    setLoading(false);
+    setEditId(null);
+    setOpen(false);
+  };
+
+  const onSubmit = (e) => {
+    e.preventDefault();
+    
+    // Validate that we have at least one image
+    if (!urls || urls.length === 0) {
+      toast.error("Please upload at least one image");
+      return;
+    }
+
+    const payload = { ...formData, images: urls };
+    const action = editId
+      ? editProduct({ id: editId, formData: payload })
+      : addNewProduct(payload);
+    
+    dispatch(action).then((response) => {
+      if (response.payload && response.payload.success !== false) {
+        toast.success(editId ? "Product updated successfully" : "Product added successfully");
+        resetAll();
+      } else {
+        toast.error("Failed to save product");
+      }
+    }).catch((error) => {
+      toast.error("An error occurred while saving the product");
+      console.error("Product save error:", error);
     });
   };
 
-  const isFormValid = () =>
-    Object.keys(formData)
-      .map((key) => formData[key] !== "")
-      .every((value) => value);
-
-  console.log("Product List:", productList);
-
   return (
     <motion.div
-      initial={{ opacity: 20, y: -20 }}
-      animate={{ opacity: 100, y: 0 }}
+      initial={{ opacity: 0, y: -20 }}
+      animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6 }}
     >
       <Fragment>
-        <div className="mb-5 w-full flex justify-between">
-          <div className="flex justify-center mb-8">
-            <div className="w-full flex items-center">
-              <Input
-                value={keyword}
-                onChange={(e) => setKeyword(e.target.value)}
-                className="py-6 border-gray-400"
-                placeholder="Search Products...."
-              />
-            </div>
-          </div>
+        <div className="mb-5 flex justify-between items-center">
+          <Input
+            value={keyword}
+            onChange={(e) => setKeyword(e.target.value)}
+            className="py-6 border-gray-400 w-100"
+            placeholder="Search Products..."
+          />
           <Button
-            onClick={() => setOpenAddProducts(true)}
+            onClick={() => setOpen(true)}
             className="shadow-xl rounded-lg bg-gray-800 hover:bg-gray-900"
           >
-            <CopyPlus />
-            Add New Product
+            <CopyPlus /> Add New Product
           </Button>
         </div>
 
-        {keyword.trim() !== "" && displayList.length === 0 ? (
+        {keyword.trim() && list.length === 0 ? (
           <p className="text-center text-gray-500">
-            No results found for "{keyword}"
+            No results for "{keyword}"
           </p>
         ) : (
-          <div className="grid gap-4 grid-cols md:grid-cols-3 lg:grid-cols-4">
-            {displayList.map((product) => (
-              <AdminProductTile
-                setFormData={setFormData}
-                setOpenAddProducts={setOpenAddProducts}
-                setCurrentEditedId={setCurrentEditedId}
-                handleDeleteProduct={handleDeleteProduct}
-                key={product._id}
-                product={product}
-              />
-            ))}
+          <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-4">
+            {list && list.length > 0 ? (
+              list.map((p) => (
+                <AdminProductTile
+                  key={p._id}
+                  product={p}
+                  setFormData={setFormData}
+                  setOpenAddProducts={setOpen}
+                  setCurrentEditedId={setEditId}
+                  handleDeleteProduct={(id) => {
+                    dispatch(deleteProduct(id)).then((response) => {
+                      if (response.payload && response.payload.success !== false) {
+                        toast.success("Product deleted successfully");
+                        dispatch(fetchAllProducts());
+                      } else {
+                        toast.error("Failed to delete product");
+                      }
+                    });
+                  }}
+                />
+              ))
+            ) : (
+              <div className="col-span-full text-center text-gray-500 py-8">
+                No products found
+              </div>
+            )}
           </div>
         )}
 
-        <Sheet
-          open={openAddProducts}
-          onOpenChange={() => {
-            setOpenAddProducts(false);
-            setCurrentEditedId(null);
-            setFormData(initialFormData);
-          }}
-        >
+        <Sheet open={open} onOpenChange={resetAll}>
           <SheetContent
             side="right"
             className="w-full overflow-auto bg-gray-800 border-0"
           >
             <SheetHeader>
               <SheetTitle className="font-bold text-lg text-white">
-                {currentEditedId ? "Edit Product" : "Add New Product"}
+                {editId ? "Edit Product" : "Add New Product"}
               </SheetTitle>
             </SheetHeader>
 
-            <ProductImageUpload
-              imageFile={imageFile}
-              setImageFile={setImageFile}
-              uploadedImageUrl={uploadedImageUrl}
-              setImageUploadedUrl={setImageUploadedUrl}
-              setImageLoadingState={setImageLoadingState}
-              imageLoadingState={imageLoadingState}
-              currentEditedId={currentEditedId}
+            <MultiImageUpload
               mode="dark"
+              images={formData.images || []}
+              setImages={(imgs) => setFormData((f) => ({ ...f, images: imgs }))}
+              uploadedUrls={urls}
+              setUploadedUrls={setUrls}
+              loading={loading}
+              setLoading={setLoading}
+              currentEditedId={editId}
             />
-            <div>
-              <CommonForm
-                formControls={addProductFormElements}
-                formData={formData}
-                setFormData={setFormData}
-                ButtonText={currentEditedId !== null ? "Edit" : "Add"}
-                onSubmit={onSubmit}
-                mode="dark"
-                isButtonDisabled={!isFormValid()}
-              />
-            </div>
+
+            <CommonForm
+              formControls={addProductFormElements}
+              formData={formData}
+              setFormData={setFormData}
+              ButtonText={editId ? "Edit" : "Add"}
+              onSubmit={onSubmit}
+              mode="dark"
+              isButtonDisabled={
+                !formData.title ||
+                !formData.description ||
+                !formData.category ||
+                urls.length === 0 ||
+                loading
+              }
+            />
           </SheetContent>
         </Sheet>
       </Fragment>

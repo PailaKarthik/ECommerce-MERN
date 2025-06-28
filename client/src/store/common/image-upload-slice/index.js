@@ -1,3 +1,4 @@
+// store/common/image-upload-slice.js
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import axios from "axios";
 
@@ -9,29 +10,26 @@ const initialState = {
 export const addFeatureImages = createAsyncThunk(
   "/common/addFeatureImages",
   async (image) => {
-    // Make API request
     const response = await axios.post(
       `${import.meta.env.VITE_API_URL}/api/common/images/add`,
-      {image}
+      { image }
     );
-
     return response.data;
   }
 );
+
 export const getFeatureImages = createAsyncThunk(
   "/common/getFeatureImages",
   async () => {
-    // Make API request
     const response = await axios.get(
       `${import.meta.env.VITE_API_URL}/api/common/images/get`
     );
-
     return response.data;
   }
 );
 
-const commonFeatureImageSlice = createSlice({
-  name: "commonFeatureImageSlice",
+const commonFeatureImage = createSlice({
+  name: "commonFeatureImage",            // ← must match the key below
   initialState,
   reducers: {},
   extraReducers: (builder) => {
@@ -50,4 +48,4 @@ const commonFeatureImageSlice = createSlice({
   },
 });
 
-export default commonFeatureImageSlice.reducer;
+export default commonFeatureImage.reducer;
