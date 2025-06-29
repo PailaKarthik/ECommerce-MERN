@@ -71,10 +71,10 @@ const fetchCartItems = async (req, res) => {
       });
     }
 
-    // Properly await populate
+    // Properly await populate - only images field exists
     await cart.populate({
       path: "items.productId",
-      select: "title price image sellPrice",
+      select: "title price images sellPrice",
     });
 
     // Remove any items where product was deleted
@@ -85,13 +85,13 @@ const fetchCartItems = async (req, res) => {
       // repopulate after save if needed
       await cart.populate({
         path: "items.productId",
-        select: "title price image sellPrice",
+        select: "title price images sellPrice",
       });
     }
 
     const populateCartItems = validItems.map((item) => ({
       productId: item.productId._id,
-      image: item.productId.image,
+      images: item.productId.images, // Only images array exists
       title: item.productId.title,
       price: item.productId.price,
       sellPrice: item.productId.sellPrice,
@@ -152,12 +152,12 @@ const updateCartItemQuantity = async (req, res) => {
 
     await cart.populate({
       path: "items.productId",
-      select: "title price image sellPrice",
+      select: "title price images sellPrice",
     });
 
     const populateCartItems = cart.items.map((item) => ({
       productId: item.productId ? item.productId._id : null,
-      image: item.productId ? item.productId.image : null,
+      images: item.productId ? item.productId.images : null, // Only images array
       title: item.productId ? item.productId.title : "Product not found",
       price: item.productId ? item.productId.price : null,
       sellPrice: item.productId ? item.productId.sellPrice : null,
@@ -217,12 +217,12 @@ const deleteCartItem = async (req, res) => {
     await cart.save();
     await cart.populate({
       path: "items.productId",
-      select: "title price image sellPrice",
+      select: "title price images sellPrice",
     });
 
     const populateCartItems = cart.items.map((item) => ({
       productId: item.productId ? item.productId._id : null,
-      image: item.productId ? item.productId.image : null,
+      images: item.productId ? item.productId.images : null, // Only images array
       title: item.productId ? item.productId.title : "Product not found",
       price: item.productId ? item.productId.price : null,
       sellPrice: item.productId ? item.productId.sellPrice : null,

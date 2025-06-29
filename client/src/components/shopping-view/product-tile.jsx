@@ -8,160 +8,256 @@ const ShoppingProductTile = ({
   product,
   handleGetProductDetails,
   handleAddToCart,
+  isMobile = false,
 }) => {
   const [imageError, setImageError] = useState(false);
 
-  // Decide default size: '-' if both pant and tshirt sizes are unavailable
+  // default size if none provided
   const defaultSize =
     product?.pantSizes === "-" && product?.tshirtSizes === "-"
       ? "-"
       : null;
 
-  // Get the first valid image from the images array
+  // pick first valid image URL
   const getProductImage = () => {
-    if (product?.images && Array.isArray(product.images) && product.images.length > 0) {
-      // Find the first valid image URL
-      const validImage = product.images.find(img => 
-        img && typeof img === 'string' && img.trim() !== ''
+    if (Array.isArray(product?.images) && product.images.length) {
+      const valid = product.images.find(
+        (img) => typeof img === "string" && img.trim() !== ""
       );
-      return validImage || null;
+      return valid || null;
     }
-    // Fallback: check if there's a single image property (for backward compatibility)
     return product?.image || null;
   };
 
   const productImage = getProductImage();
   const hasValidImage = productImage && !imageError;
 
-  const handleImageError = () => {
-    setImageError(true);
-  };
+  const handleImageError = () => setImageError(true);
+  const handleImageLoad = () => setImageError(false);
 
-  const handleImageLoad = () => {
-    setImageError(false);
-  };
-
-  // Image placeholder component
-  const ImagePlaceholder = () => (
-    <div className="w-full h-full bg-gray-700 flex items-center justify-center">
+  // placeholder when no image
+  const ImagePlaceholder = ({ className }) => (
+    <div className={`bg-gray-700 flex items-center justify-center ${className}`}>
       <div className="text-center text-gray-400">
-        <ImageIcon size={48} className="mx-auto mb-2" />
-        <p className="text-sm">No image</p>
+        <ImageIcon size={isMobile ? 24 : 48} className="mx-auto mb-1" />
+        <p className="text-xs">No image</p>
       </div>
     </div>
   );
 
-  // Get stock badge based on quantity
+  // stock badge logic
   const getStockBadge = () => {
-    if (product?.quantity === 0) {
+    if (product.quantity === 0) {
       return (
-        <Badge className="absolute top-2 left-2 bg-red-500 text-white font-bold px-2 py-1 text-xs tracking-wider flex items-center gap-1">
+        <Badge className="absolute top-2 left-2 bg-red-500 text-white font-bold px-2 py-1 text-xs flex items-center gap-1 z-10">
           Out of Stock
-          <Tag size={12} />
-        </Badge>
-      );
-    } else if (product?.quantity < 10) {
-      return (
-        <Badge className="absolute top-2 left-2 bg-amber-500 text-white font-bold px-2 py-1 text-xs tracking-wider flex items-center gap-1">
-          {`${product.quantity} Left`}
-          <Tag size={12} />
-        </Badge>
-      );
-    } else {
-      return (
-        <Badge className="absolute top-2 left-2 bg-green-500 text-white font-bold px-2 py-1 text-xs tracking-wider flex items-center gap-1">
-          In Stock
-          <Tag size={12} />
+          <Tag size={8} />
         </Badge>
       );
     }
-  };
-
-  // Get discount percentage if there's a sell price
-  const getDiscountPercentage = () => {
-    if (product?.sellPrice > 0 && product?.price > product?.sellPrice) {
-      const discount = Math.round(((product.price - product.sellPrice) / product.price) * 100);
-      return discount;
+    if (product.quantity < 10) {
+      return (
+        <Badge className="absolute top-2 left-2 bg-amber-500 text-white font-bold px-2 py-1 text-xs flex items-center gap-1 z-10">
+          {product.quantity} Left
+          <Tag size={8} />
+        </Badge>
+      );
     }
-    return 0;
+    return (
+      <Badge className="absolute top-2 left-2 bg-green-500 text-white font-bold px-2 py-1 text-xs flex items-center gap-1 z-10">
+        In Stock
+        <Tag size={8} />
+      </Badge>
+    );
   };
 
-  const discountPercentage = getDiscountPercentage();
+  // discount percentage
+  const discountPercentage =
+    product.sellPrice > 0 && product.price > product.sellPrice
+      ? Math.round(
+          ((product.price - product.sellPrice) / product.price) * 100
+        )
+      : 0;
 
+  // MOBILE VARIANT
+  if (isMobile) {
+    return (
+      <Card className="w-full bg-gray-800 text-gray-200 border border-gray-700 shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden flex-shrink-0">
+        <div
+          onClick={() => handleGetProductDetails(product._id)}
+          className="cursor-pointer hover:bg-gray-750 transition-colors"
+        >
+          {/* IMAGE */}
+          <div className="relative h-48 overflow-hidden">
+            {hasValidImage ? (
+              <img
+                src={productImage}
+                alt={product.title || "Product"}
+                className="w-full h-full object-cover object-top"
+                onError={handleImageError}
+                onLoad={handleImageLoad}
+              />
+            ) : (
+              <ImagePlaceholder className="w-full h-full" />
+            )}
+
+            {getStockBadge()}
+
+            {discountPercentage > 0 && (
+              <Badge className="absolute top-12 left-2 bg-red-500 text-white font-bold px-2 py-1 text-xs z-10">
+                -{discountPercentage}%
+              </Badge>
+            )}
+
+            {Array.isArray(product.images) && product.images.length > 1 && (
+              <div className="absolute bottom-2 right-2 bg-black bg-opacity-60 text-white text-xs px-2 py-1 rounded z-10">
+                +{product.images.length - 1} more
+              </div>
+            )}
+          </div>
+
+          {/* DETAILS */}
+          <div className="p-4">
+            <h3 className="text-lg font-bold mb-2 line-clamp-2 capitalize">
+              {product.title || "Untitled Product"}
+            </h3>
+            <div className="flex items-center gap-2 text-gray-400 mb-3 text-sm">
+              <span className="capitalize bg-gray-700 px-2 py-1 rounded text-xs">
+                {product.category || "N/A"}
+              </span>
+              <span>•</span>
+              <span className="capitalize font-medium">
+                {product.brand || "N/A"}
+              </span>
+            </div>
+            <div className="flex items-center gap-2 mb-3">
+              {product.sellPrice > 0 && (
+                <span className="text-xl font-bold text-green-400">
+                  ₹{product.sellPrice}
+                </span>
+              )}
+              <span
+                className={`text-lg ${
+                  product.sellPrice > 0
+                    ? "line-through text-gray-500"
+                    : "text-white font-semibold"
+                }`}
+              >
+                ₹{product.price}
+              </span>
+            </div>
+
+            {product.quantity === 0 ? (
+              <Button
+                disabled
+                className="w-full opacity-60 cursor-not-allowed bg-gray-700 text-gray-400 font-semibold py-3 rounded flex items-center justify-center gap-2"
+              >
+                <ShoppingCart size={16} />
+                Out of Stock
+              </Button>
+            ) : (
+              <Button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleAddToCart(product._id, product.quantity, defaultSize);
+                }}
+                className="w-full bg-gray-700 hover:bg-gray-600 text-white font-semibold py-3 rounded flex items-center justify-center gap-2 shadow-md hover:shadow-lg"
+              >
+                <ShoppingCart size={16} />
+                Add to Cart
+              </Button>
+            )}
+          </div>
+        </div>
+      </Card>
+    );
+  }
+
+  // DESKTOP VARIANT
   return (
     <Card className="py-0 w-full max-w-sm mx-auto bg-gray-800 text-gray-200 border border-gray-700 shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden group cursor-pointer transform hover:-translate-y-1">
-      <div onClick={() => handleGetProductDetails(product?._id)}>
+      <div onClick={() => handleGetProductDetails(product._id)}>
+        {/* IMAGE */}
         <div className="relative h-[300px] overflow-hidden">
           {hasValidImage ? (
             <img
               src={productImage}
-              alt={product?.title || 'Product'}
+              alt={product.title || "Product"}
               className="w-full h-full object-cover object-top group-hover:scale-110 transition-transform duration-300"
               onError={handleImageError}
               onLoad={handleImageLoad}
             />
           ) : (
-            <ImagePlaceholder />
+            <ImagePlaceholder className="w-full h-full" />
           )}
-          
-          {/* Stock Badge */}
-          {getStockBadge()}
 
-          {/* Discount Badge */}
+          <Badge
+            className={`absolute top-2 left-2 font-bold px-2 py-1 text-xs flex items-center gap-1 z-10 ${
+              product.quantity === 0
+                ? "bg-red-500 text-white"
+                : product.quantity < 10
+                ? "bg-amber-500 text-white"
+                : "bg-green-500 text-white"
+            }`}
+          >
+            {product.quantity === 0
+              ? "Out of Stock"
+              : product.quantity < 10
+              ? `${product.quantity} Left`
+              : "In Stock"}
+            <Tag size={12} />
+          </Badge>
+
           {discountPercentage > 0 && (
-            <Badge className="absolute top-2 right-2 bg-red-500 text-white font-bold px-2 py-1 text-xs">
+            <Badge className="absolute top-2 right-2 bg-red-500 text-white font-bold px-2 py-1 text-xs z-10">
               -{discountPercentage}%
             </Badge>
           )}
 
-          {/* Multiple Images Indicator */}
-          {product?.images && Array.isArray(product.images) && product.images.length > 1 && (
-            <div className="absolute bottom-2 right-2 bg-black bg-opacity-60 text-white text-xs px-2 py-1 rounded">
+          {Array.isArray(product.images) && product.images.length > 1 && (
+            <div className="absolute bottom-2 right-2 bg-black bg-opacity-60 text-white text-xs px-2 py-1 rounded z-10">
               +{product.images.length - 1} more
             </div>
           )}
         </div>
 
+        {/* DETAILS */}
         <CardContent className="p-4">
           <h2 className="text-xl font-bold mb-2 capitalize line-clamp-2 group-hover:text-blue-400 transition-colors">
-            {product?.title || 'Untitled Product'}
+            {product.title || "Untitled Product"}
           </h2>
-          
           <div className="flex items-center gap-2 text-gray-400 mb-3 text-sm">
             <span className="capitalize bg-gray-700 px-2 py-1 rounded text-xs">
-              {product?.category || 'N/A'}
+              {product.category || "N/A"}
             </span>
-            <span className="text-gray-500">•</span>
+            <span>•</span>
             <span className="capitalize font-medium">
-              {product?.brand || 'N/A'}
+              {product.brand || "N/A"}
             </span>
           </div>
-          
           <div className="flex items-center gap-2 mb-2">
-            {product?.sellPrice > 0 && (
+            {product.sellPrice > 0 && (
               <span className="text-xl font-bold text-green-400">
                 ₹{product.sellPrice}.00
               </span>
             )}
             <span
               className={`text-lg ${
-                product?.sellPrice > 0 
-                  ? "line-through text-gray-500" 
+                product.sellPrice > 0
+                  ? "line-through text-gray-500"
                   : "text-white font-semibold"
               }`}
             >
-              ₹{product?.price || 0}.00
+              ₹{product.price}.00
             </span>
           </div>
-
-          {/* Size Information */}
           <div className="text-xs text-gray-400 mt-2">
-            {product?.pantSizes !== "-" && product?.pantSizes && (
+            {product.pantSizes !== "-" && product.pantSizes && (
               <span className="bg-gray-700 px-2 py-1 rounded mr-2">
                 Pant: {product.pantSizes}
               </span>
             )}
-            {product?.tshirtSizes !== "-" && product?.tshirtSizes && (
+            {product.tshirtSizes !== "-" && product.tshirtSizes && (
               <span className="bg-gray-700 px-2 py-1 rounded">
                 T-Shirt: {product.tshirtSizes}
               </span>
@@ -171,10 +267,10 @@ const ShoppingProductTile = ({
       </div>
 
       <CardFooter className="p-4 pt-0">
-        {product?.quantity === 0 ? (
-          <Button 
+        {product.quantity === 0 ? (
+          <Button
             disabled
-            className="w-full opacity-60 cursor-not-allowed bg-gray-700 text-gray-400 font-semibold py-3 px-4 rounded-md transition-colors duration-200 flex items-center justify-center gap-2"
+            className="w-full opacity-60 cursor-not-allowed bg-gray-700 text-gray-400 font-semibold py-3 rounded-md flex items-center justify-center gap-2"
           >
             <ShoppingCart size={18} />
             Out of Stock
@@ -182,10 +278,10 @@ const ShoppingProductTile = ({
         ) : (
           <Button
             onClick={(e) => {
-              e.stopPropagation(); // Prevent triggering the card click
+              e.stopPropagation();
               handleAddToCart(product._id, product.quantity, defaultSize);
             }}
-            className="w-full bg-gray-700 hover:bg-gray-600 text-white font-semibold py-3 px-4 rounded-md transition-all duration-200 flex items-center justify-center gap-2 shadow-md hover:shadow-lg transform hover:scale-105"
+            className="w-full bg-gray-700 hover:bg-gray-600 text-white font-semibold py-3 rounded-md flex items-center justify-center gap-2 shadow-md hover:shadow-lg transform hover:scale-105"
           >
             <ShoppingCart size={18} />
             Add to Cart

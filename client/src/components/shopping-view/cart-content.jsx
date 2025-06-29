@@ -1,5 +1,5 @@
-import { Minus, Plus, Trash } from "lucide-react";
-import React from "react";
+import { Minus, Plus, Trash, ImageIcon } from "lucide-react";
+import React, { useState } from "react";
 import { Button } from "../ui/button";
 import { useDispatch, useSelector } from "react-redux";
 import {
@@ -13,7 +13,9 @@ const UserCartItemsContent = ({ cartItem, mode }) => {
   const { user } = useSelector((state) => state.auth);
   const dispatch = useDispatch();
   const { productList } = useSelector((state) => state.shoppingProducts);
+  const [imageError, setImageError] = useState(false);
 
+  console.log("cartIteminCart",cartItem)
   const handleDeleteItemInCart = (productId) => {
     dispatch(deleteCartItem({ userId: user?.id, productId })).then(
       (response) => {
@@ -83,6 +85,67 @@ const UserCartItemsContent = ({ cartItem, mode }) => {
     });
   };
 
+  // Get the first valid image from the images array or fallback to single image
+  const getProductImage = () => {
+    // Debug: log the cartItem to see its structure
+    console.log('CartItem data:', cartItem);
+    
+    // Check for images array first
+    if (cartItem?.images && Array.isArray(cartItem.images) && cartItem.images.length > 0) {
+      console.log('Found images array:', cartItem.images);
+      // Find the first valid image URL
+      const validImage = cartItem.images.find(img => 
+        img && typeof img === 'string' && img.trim() !== ''
+      );
+      if (validImage) {
+        console.log('Using image from array:', validImage);
+        return validImage;
+      }
+    }
+    
+    // Check for single image property
+    if (cartItem?.image && typeof cartItem.image === 'string' && cartItem.image.trim() !== '') {
+      console.log('Using single image:', cartItem.image);
+      return cartItem.image;
+    }
+    
+    // Check for productImage property (sometimes cart items have this)
+    if (cartItem?.productImage && typeof cartItem.productImage === 'string' && cartItem.productImage.trim() !== '') {
+      console.log('Using productImage:', cartItem.productImage);
+      return cartItem.productImage;
+    }
+    
+    // Check for thumbnail property
+    if (cartItem?.thumbnail && typeof cartItem.thumbnail === 'string' && cartItem.thumbnail.trim() !== '') {
+      console.log('Using thumbnail:', cartItem.thumbnail);
+      return cartItem.thumbnail;
+    }
+    
+    console.log('No valid image found');
+    return null;
+  };
+
+  const productImage = getProductImage();
+  const hasValidImage = productImage && !imageError;
+
+  const handleImageError = () => {
+    setImageError(true);
+  };
+
+  const handleImageLoad = () => {
+    setImageError(false);
+  };
+
+  // Image placeholder component
+  const ImagePlaceholder = () => (
+    <div className="w-full sm:w-20 h-40 sm:h-20 bg-gray-700 flex items-center justify-center rounded">
+      <div className="text-center text-gray-400">
+        <ImageIcon size={24} className="mx-auto mb-1" />
+        <p className="text-xs">No image</p>
+      </div>
+    </div>
+  );
+
   return (
     <motion.div
       initial={{ opacity: 0, y: -20 }}
@@ -90,11 +153,17 @@ const UserCartItemsContent = ({ cartItem, mode }) => {
       transition={{ duration: 0.7 }}
       className="flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-4 p-4 rounded bg-gray-800 border-gray-700"
     >
-      <img
-        src={cartItem.image}
-        alt={cartItem.title}
-        className="w-full sm:w-20 h-40 sm:h-20 object-cover object-top rounded"
-      />
+      {hasValidImage ? (
+        <img
+          src={productImage}
+          alt={cartItem.title}
+          className="w-full sm:w-20 h-40 sm:h-20 object-cover object-top rounded"
+          onError={handleImageError}
+          onLoad={handleImageLoad}
+        />
+      ) : (
+        <ImagePlaceholder />
+      )}
       <div className="flex flex-col sm:flex-row items-center justify-between gap-4 w-full">
         <div className="flex-1 flex flex-col items-center sm:items-start">
           <h1 className="text-gray-200 font-bold text-lg text-center sm:text-left mb-2">
@@ -135,7 +204,7 @@ const UserCartItemsContent = ({ cartItem, mode }) => {
         </div>
         <div className="flex flex-col items-center sm:items-end">
           <p className="text-green-200 font-bold text-lg mb-2">
-            $
+            ₹
             {(cartItem.sellPrice > 0
               ? cartItem?.sellPrice * cartItem?.quantity
               : cartItem?.price * cartItem?.quantity

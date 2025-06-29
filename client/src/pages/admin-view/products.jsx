@@ -57,7 +57,7 @@ const AdminProducts = () => {
       const t = setTimeout(() => {
         setSearchParams(new URLSearchParams(`?keyword=${keyword}`));
         dispatch(getSearchResults(keyword));
-      }, 1000);
+      }, 500);
       return () => clearTimeout(t);
     } else {
       dispatch(resetSearchResults());
@@ -68,14 +68,6 @@ const AdminProducts = () => {
   useEffect(() => {
     dispatch(fetchAllProducts());
   }, [dispatch]);
-
-  useEffect(() => {
-    if (editId) {
-      // Ensure we have proper image data for editing
-      const imageUrls = formData.images || [];
-      setUrls(imageUrls);
-    }
-  }, [editId, formData.images]);
 
   const list = keyword.trim() ? searchResults : productList;
 
@@ -90,29 +82,24 @@ const AdminProducts = () => {
 
   const onSubmit = (e) => {
     e.preventDefault();
-    
-    // Validate that we have at least one image
-    if (!urls || urls.length === 0) {
-      toast.error("Please upload at least one image");
-      return;
+    if (!urls.length) {
+      return toast.error("Please upload at least one image");
     }
-
     const payload = { ...formData, images: urls };
     const action = editId
       ? editProduct({ id: editId, formData: payload })
       : addNewProduct(payload);
-    
-    dispatch(action).then((response) => {
-      if (response.payload && response.payload.success !== false) {
-        toast.success(editId ? "Product updated successfully" : "Product added successfully");
-        resetAll();
-      } else {
-        toast.error("Failed to save product");
-      }
-    }).catch((error) => {
-      toast.error("An error occurred while saving the product");
-      console.error("Product save error:", error);
-    });
+
+    dispatch(action)
+      .then((res) => {
+        if (res.payload?.success !== false) {
+          toast.success(editId ? "Updated successfully" : "Added successfully");
+          resetAll();
+        } else {
+          toast.error("Failed to save product");
+        }
+      })
+      .catch(() => toast.error("Error saving product"));
   };
 
   return (
@@ -122,60 +109,54 @@ const AdminProducts = () => {
       transition={{ duration: 0.6 }}
     >
       <Fragment>
-        <div className="mb-5 flex justify-between items-center">
+        {/* Header: search + add button */}
+        <div className="mb-5 flex flex-col sm:flex-row justify-between items-center gap-4">
           <Input
             value={keyword}
             onChange={(e) => setKeyword(e.target.value)}
-            className="py-6 border-gray-400 w-100"
             placeholder="Search Products..."
+            className="w-full sm:w-1/2"
           />
           <Button
             onClick={() => setOpen(true)}
-            className="shadow-xl rounded-lg bg-gray-800 hover:bg-gray-900"
+            className="w-full sm:w-auto shadow-xl rounded-lg bg-gray-800 hover:bg-gray-900 flex items-center justify-center"
           >
-            <CopyPlus /> Add New Product
+            <CopyPlus className="mr-2" /> Add New Product
           </Button>
         </div>
 
-        {keyword.trim() && list.length === 0 ? (
-          <p className="text-center text-gray-500">
-            No results for "{keyword}"
+        {/* Products Grid */}
+        {list.length === 0 ? (
+          <p className="text-center text-gray-500 py-8">
+            {keyword.trim() ? `No results for "${keyword}"` : "No products found"}
           </p>
         ) : (
-          <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-4">
-            {list && list.length > 0 ? (
-              list.map((p) => (
-                <AdminProductTile
-                  key={p._id}
-                  product={p}
-                  setFormData={setFormData}
-                  setOpenAddProducts={setOpen}
-                  setCurrentEditedId={setEditId}
-                  handleDeleteProduct={(id) => {
-                    dispatch(deleteProduct(id)).then((response) => {
-                      if (response.payload && response.payload.success !== false) {
-                        toast.success("Product deleted successfully");
-                        dispatch(fetchAllProducts());
-                      } else {
-                        toast.error("Failed to delete product");
-                      }
-                    });
-                  }}
-                />
-              ))
-            ) : (
-              <div className="col-span-full text-center text-gray-500 py-8">
-                No products found
-              </div>
-            )}
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {list.map((p) => (
+              <AdminProductTile
+                key={p._id}
+                product={p}
+                setFormData={setFormData}
+                setOpenAddProducts={setOpen}
+                setCurrentEditedId={setEditId}
+                handleDeleteProduct={(id) =>
+                  dispatch(deleteProduct(id)).then((res) => {
+                    if (res.payload?.success !== false) {
+                      toast.success("Deleted successfully");
+                      dispatch(fetchAllProducts());
+                    } else {
+                      toast.error("Delete failed");
+                    }
+                  })
+                }
+              />
+            ))}
           </div>
         )}
 
+        {/* Add/Edit Drawer */}
         <Sheet open={open} onOpenChange={resetAll}>
-          <SheetContent
-            side="right"
-            className="w-full overflow-auto bg-gray-800 border-0"
-          >
+          <SheetContent side="right" className="w-full sm:w-2/3 md:w-1/2 bg-gray-800">
             <SheetHeader>
               <SheetTitle className="font-bold text-lg text-white">
                 {editId ? "Edit Product" : "Add New Product"}
@@ -184,7 +165,7 @@ const AdminProducts = () => {
 
             <MultiImageUpload
               mode="dark"
-              images={formData.images || []}
+              images={formData.images}
               setImages={(imgs) => setFormData((f) => ({ ...f, images: imgs }))}
               uploadedUrls={urls}
               setUploadedUrls={setUrls}
@@ -197,16 +178,10 @@ const AdminProducts = () => {
               formControls={addProductFormElements}
               formData={formData}
               setFormData={setFormData}
-              ButtonText={editId ? "Edit" : "Add"}
+              ButtonText={editId ? "Update" : "Add"}
               onSubmit={onSubmit}
               mode="dark"
-              isButtonDisabled={
-                !formData.title ||
-                !formData.description ||
-                !formData.category ||
-                urls.length === 0 ||
-                loading
-              }
+              isButtonDisabled={!formData.title || !urls.length || loading}
             />
           </SheetContent>
         </Sheet>
