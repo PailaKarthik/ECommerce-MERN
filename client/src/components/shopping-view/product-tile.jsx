@@ -82,13 +82,13 @@ const ShoppingProductTile = ({
   // MOBILE VARIANT
   if (isMobile) {
     return (
-      <Card className="w-full bg-gray-800 text-gray-200 border border-gray-700 shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden flex-shrink-0">
+      <Card className="w-full bg-gray-800 text-gray-200 border border-gray-700 shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden flex-shrink-0 h-[340px] flex flex-col">
         <div
           onClick={() => handleGetProductDetails(product._id)}
-          className="cursor-pointer hover:bg-gray-750 transition-colors"
+          className="cursor-pointer hover:bg-gray-750 transition-colors flex-1 flex flex-col"
         >
           {/* IMAGE */}
-          <div className="relative h-48 overflow-hidden">
+          <div className="relative h-40 overflow-hidden flex-shrink-0">
             {hasValidImage ? (
               <img
                 src={productImage}
@@ -104,55 +104,63 @@ const ShoppingProductTile = ({
             {getStockBadge()}
 
             {discountPercentage > 0 && (
-              <Badge className="absolute top-12 left-2 bg-red-500 text-white font-bold px-2 py-1 text-xs z-10">
+              <Badge className="absolute top-10 left-2 bg-red-500 text-white font-bold px-1.5 py-0.5 text-xs z-10">
                 -{discountPercentage}%
               </Badge>
             )}
 
             {Array.isArray(product.images) && product.images.length > 1 && (
-              <div className="absolute bottom-2 right-2 bg-black bg-opacity-60 text-white text-xs px-2 py-1 rounded z-10">
-                +{product.images.length - 1} more
+              <div className="absolute bottom-1 right-1 bg-black bg-opacity-60 text-white text-xs px-1.5 py-0.5 rounded z-10">
+                +{product.images.length - 1}
               </div>
             )}
           </div>
 
           {/* DETAILS */}
-          <div className="p-4">
-            <h3 className="text-lg font-bold mb-2 line-clamp-2 capitalize">
-              {product.title || "Untitled Product"}
-            </h3>
-            <div className="flex items-center gap-2 text-gray-400 mb-3 text-sm">
-              <span className="capitalize bg-gray-700 px-2 py-1 rounded text-xs">
-                {product.category || "N/A"}
-              </span>
-              <span>•</span>
-              <span className="capitalize font-medium">
-                {product.brand || "N/A"}
-              </span>
-            </div>
-            <div className="flex items-center gap-2 mb-3">
-              {product.sellPrice > 0 && (
-                <span className="text-xl font-bold text-green-400">
-                  ₹{product.sellPrice}
+          <div className="p-3 flex-1 flex flex-col justify-between">
+            <div>
+              <h3 className="text-sm font-semibold mb-1 capitalize overflow-hidden line-clamp-2" style={{ 
+                display: '-webkit-box',
+                WebkitLineClamp: 2,
+                WebkitBoxOrient: 'vertical',
+                lineHeight: '1.2',
+                maxHeight: '2.4em'
+              }}>
+                {product.title || "Untitled Product"}
+              </h3>
+              <div className="flex items-center gap-1 text-gray-400 mb-2 text-xs">
+                <span className="capitalize bg-gray-700 px-1.5 py-0.5 rounded text-xs">
+                  {product.category || "N/A"}
                 </span>
-              )}
-              <span
-                className={`text-lg ${
-                  product.sellPrice > 0
-                    ? "line-through text-gray-500"
-                    : "text-white font-semibold"
-                }`}
-              >
-                ₹{product.price}
-              </span>
+                <span>•</span>
+                <span className="capitalize font-medium text-xs truncate">
+                  {product.brand || "N/A"}
+                </span>
+              </div>
+              <div className="flex items-center gap-1.5 mb-2">
+                {product.sellPrice > 0 && (
+                  <span className="text-base font-bold text-green-400">
+                    ₹{product.sellPrice}
+                  </span>
+                )}
+                <span
+                  className={`text-sm ${
+                    product.sellPrice > 0
+                      ? "line-through text-gray-500"
+                      : "text-white font-semibold"
+                  }`}
+                >
+                  ₹{product.price}
+                </span>
+              </div>
             </div>
 
             {product.quantity === 0 ? (
               <Button
                 disabled
-                className="w-full opacity-60 cursor-not-allowed bg-gray-700 text-gray-400 font-semibold py-3 rounded flex items-center justify-center gap-2"
+                className="w-full opacity-60 cursor-not-allowed bg-gray-700 text-gray-400 font-medium py-2 rounded text-xs flex items-center justify-center gap-1.5"
               >
-                <ShoppingCart size={16} />
+                <ShoppingCart size={14} />
                 Out of Stock
               </Button>
             ) : (
@@ -161,9 +169,9 @@ const ShoppingProductTile = ({
                   e.stopPropagation();
                   handleAddToCart(product._id, product.quantity, defaultSize);
                 }}
-                className="w-full bg-gray-700 hover:bg-gray-600 text-white font-semibold py-3 rounded flex items-center justify-center gap-2 shadow-md hover:shadow-lg"
+                className="w-full bg-gray-700 hover:bg-gray-600 text-white font-medium py-2 rounded text-xs flex items-center justify-center gap-1.5 shadow-md hover:shadow-lg"
               >
-                <ShoppingCart size={16} />
+                <ShoppingCart size={14} />
                 Add to Cart
               </Button>
             )}
@@ -178,12 +186,12 @@ const ShoppingProductTile = ({
     <Card className="py-0 w-full max-w-sm mx-auto bg-gray-800 text-gray-200 border border-gray-700 shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden group cursor-pointer transform hover:-translate-y-1">
       <div onClick={() => handleGetProductDetails(product._id)}>
         {/* IMAGE */}
-        <div className="relative h-[300px] overflow-hidden">
+        <div className="relative md:h-[300px] overflow-hidden">
           {hasValidImage ? (
             <img
               src={productImage}
               alt={product.title || "Product"}
-              className="w-full h-full object-cover object-top group-hover:scale-110 transition-transform duration-300"
+              className="w-full h-[150px] md:h-full object-cover object-top group-hover:scale-110 transition-transform duration-300"
               onError={handleImageError}
               onLoad={handleImageLoad}
             />
@@ -222,11 +230,11 @@ const ShoppingProductTile = ({
         </div>
 
         {/* DETAILS */}
-        <CardContent className="p-4">
-          <h2 className="text-xl font-bold mb-2 capitalize line-clamp-2 group-hover:text-blue-400 transition-colors">
+        <CardContent className="p-1 md:p-4">
+          <h2 className="text-md font-bold mb-2 capitalize line-clamp-2 group-hover:text-blue-400 transition-colors">
             {product.title || "Untitled Product"}
           </h2>
-          <div className="flex items-center gap-2 text-gray-400 mb-3 text-sm">
+          <div className="flex items-center gap-1 text-gray-400 mb-3 text-sm">
             <span className="capitalize bg-gray-700 px-2 py-1 rounded text-xs">
               {product.category || "N/A"}
             </span>
@@ -237,12 +245,12 @@ const ShoppingProductTile = ({
           </div>
           <div className="flex items-center gap-2 mb-2">
             {product.sellPrice > 0 && (
-              <span className="text-xl font-bold text-green-400">
+              <span className="text-sm font-bold text-green-400">
                 ₹{product.sellPrice}.00
               </span>
             )}
             <span
-              className={`text-lg ${
+              className={`text-sm ${
                 product.sellPrice > 0
                   ? "line-through text-gray-500"
                   : "text-white font-semibold"

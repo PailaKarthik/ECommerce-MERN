@@ -60,7 +60,7 @@ const AdminProductTile = ({
             <img
               src={productImage}
               alt={product?.title || 'Product'}
-              className="w-full h-[300px] object-cover object-top rounded-t-lg"
+              className="w-full h-[150px] md:h-[300px] object-cover object-top rounded-t-lg"
               onError={handleImageError}
               onLoad={handleImageLoad}
             />
@@ -77,13 +77,13 @@ const AdminProductTile = ({
         </div>
         
         <CardContent className="text-center p-4">
-          <h2 className="text-xl font-semibold mb-2 capitalize line-clamp-2">
+          <h2 className="text-lg font-semibold mb-2 capitalize line-clamp">
             {product?.title || 'Untitled Product'}
           </h2>
           
           <div className="flex justify-center items-center mb-2 gap-2">
             {product?.sellPrice > 0 && (
-              <span className="text-lg font-bold text-green-400">
+              <span className="text-sm font-bold text-green-400">
                 ₹{product.sellPrice}.00
               </span>
             )}
@@ -92,7 +92,7 @@ const AdminProductTile = ({
                 product?.sellPrice > 0 
                   ? "line-through text-gray-400" 
                   : "text-white"
-              } text-lg font-semibold`}
+              } text-sm font-semibold `}
             >
               ₹{product?.price || 0}.00
             </span>

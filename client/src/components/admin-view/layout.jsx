@@ -15,7 +15,7 @@ const AdminLayout = () => {
         {/* admin header */}
         <AdminHeader setOpen ={setOpenSidebar} />
         {/* main content */}
-        <main className=" bg-gray-700 text-white p-4 w-full h-full">
+        <main className=" bg-gray-800 text-white p-2 md:p-4 w-full h-full">
           <Outlet />
         </main>
       </div>

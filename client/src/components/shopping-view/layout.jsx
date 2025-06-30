@@ -4,7 +4,7 @@ import ShoppingHeader from "./header";
 
 const ShpppingLayout = () => {
   return (
-    <div className="flex flex-col h-screen">
+    <div className="flex flex-col">
       {/* common header */}
       <ShoppingHeader />
       <main className="flex-1 overflow-auto scrollbar-hide">
