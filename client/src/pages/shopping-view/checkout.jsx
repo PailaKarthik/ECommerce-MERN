@@ -11,9 +11,7 @@ import { toast } from "sonner";
 const ShoppingCheckout = () => {
   const { cartItems } = useSelector((state) => state.shoppingCart);
   const { user } = useSelector((state) => state.auth);
-  const {  isLoading } = useSelector(
-    (state) => state.shoppingOrders
-  );
+  const { isLoading } = useSelector((state) => state.shoppingOrders);
 
   const [currentSelectedAddress, setCurrentSelectedAddress] = useState(null);
   const dispatch = useDispatch();
@@ -35,7 +33,7 @@ const ShoppingCheckout = () => {
     }
 
     // 1) create order on backend
-    const payload  = await dispatch(
+    const payload = await dispatch(
       createNewOrder({
         userId: user?.id,
         cartId: cartItems?._id,
@@ -45,7 +43,7 @@ const ShoppingCheckout = () => {
           image: item.image,
           price: item.sellPrice > 0 ? item.sellPrice : item.price,
           quantity: item.quantity,
-          size : item.size
+          size: item.size,
         })),
         addressInfo: {
           addressId: currentSelectedAddress._id,
@@ -58,13 +56,13 @@ const ShoppingCheckout = () => {
         totalAmount: totalCartAmount,
       })
     ).unwrap();
-    
-    console.log(payload)
+
+    console.log(payload);
     // 2) configure and open Razorpay
     const options = {
       key: import.meta.env.VITE_RAZORPAY_KEY_ID,
-      amount: payload.amount,         // paise
-      currency: payload.currency,     // “INR”
+      amount: payload.amount, // paise
+      currency: payload.currency, // "INR"
       order_id: payload.razorpayOrderId,
       handler: async (resp) => {
         // 3) capture on backend
@@ -91,46 +89,116 @@ const ShoppingCheckout = () => {
   };
 
   return (
-    <div className="flex flex-col">
-      <div className="relative h-[300px] w-full overflow-hidden">
+    <div className="min-h-screen bg-gray-50">
+      {/* Hero Section - Responsive Height */}
+      <div className="relative h-[200px] sm:h-[250px] md:h-[300px] lg:h-[350px] w-full overflow-hidden">
         <img
           src={accImg}
           className="h-full w-full object-cover object-center"
+          alt="Checkout"
         />
       </div>
-      <div className="bg-gray-900 grid grid-cols-1 sm:grid-cols-2 gap-2 p-2 lg:p-5">
-        <ShopAddress setCurrentSelectedAddress={setCurrentSelectedAddress} />
-        <div className="flex flex-col gap-4 p-5 ">
-          {cartItems?.items?.map((cartItem, i) => (
-            <UserCartItemsContent
-              key={i}
-              cartItem={cartItem}
-              mode="dark"
-            />
-          ))}
-          <div className="mt-4 p-4 shadow-sm shadow-gray-500 rounded bg-gray-800">
-            <div className="flex justify-between">
-              <span className="font-bold text-lg text-gray-200">Total</span>
-              <span className="font-bold text-green-400 text-lg">
-                ₹{totalCartAmount}.00
-              </span>
+
+      {/* Main Content */}
+      <div className="bg-gray-900 min-h-screen">
+        <div className="px-4 sm:px-6 py-6 lg:py-8">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-8">
+            
+            {/* Address Section - Full width on mobile, left column on desktop */}
+            <div className="lg:col-span-7 xl:col-span-8">
+              <div className="bg-gray-800 rounded-lg p-4 sm:p-6 shadow-lg">
+                <h2 className="text-xl sm:text-2xl font-semibold text-white mb-4 sm:mb-6">
+                  Delivery Address
+                </h2>
+                <ShopAddress setCurrentSelectedAddress={setCurrentSelectedAddress} />
+              </div>
             </div>
-          </div>
-          <div className="mt-4">
-            <Button
-              onClick={handlePayment}
-              className="w-full bg-gray-700 hover:bg-gray-600"
-              disabled={isLoading}
-            >
-              {isLoading
-                ? "Processing…"
-                : (
-                  <div className="flex items-center gap-2">
-                    <IndianRupee /> Checkout with Razorpay
-                  </div>
-                )
-              }
-            </Button>
+
+            {/* Order Summary Section - Full width on mobile, right column on desktop */}
+            <div className="lg:col-span-5 xl:col-span-4">
+              <div className="bg-gray-800 rounded-lg p-4 sm:p-6 shadow-lg sticky top-4">
+                <h2 className="text-xl sm:text-2xl font-semibold text-white mb-4 sm:mb-6">
+                  Order Summary
+                </h2>
+                
+                {/* Cart Items */}
+                <div className="space-y-3 sm:space-y-4 max-h-[400px] overflow-y-auto">
+                  {cartItems?.items?.length > 0 ? (
+                    cartItems.items.map((cartItem, i) => (
+                      <div key={i} className="border-b border-gray-700 pb-3 last:border-b-0">
+                        <UserCartItemsContent
+                          cartItem={cartItem}
+                          mode="dark"
+                        />
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-center py-8 text-gray-400">
+                      <p>Your cart is empty</p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Total Section */}
+                {cartItems?.items?.length > 0 && (
+                  <>
+                    <div className="mt-6 pt-4 border-t border-gray-700">
+                      <div className="space-y-2 text-sm sm:text-base">
+                        <div className="flex justify-between text-gray-300">
+                          <span>Subtotal</span>
+                          <span>₹{totalCartAmount}.00</span>
+                        </div>
+                        <div className="flex justify-between text-gray-300">
+                          <span>Shipping</span>
+                          <span className="text-green-400">Free</span>
+                        </div>
+                        <div className="flex justify-between text-gray-300">
+                          <span>Tax</span>
+                          <span>Included</span>
+                        </div>
+                      </div>
+                      
+                      <div className="mt-4 pt-4 border-t border-gray-600">
+                        <div className="flex justify-between items-center">
+                          <span className="text-lg sm:text-xl font-bold text-white">Total</span>
+                          <span className="text-lg sm:text-xl font-bold text-green-400">
+                            ₹{totalCartAmount}.00
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Checkout Button */}
+                    <div className="mt-6">
+                      <Button
+                        onClick={handlePayment}
+                        className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold py-3 sm:py-4 text-base sm:text-lg rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl"
+                        disabled={isLoading || !cartItems?.items?.length}
+                      >
+                        {isLoading ? (
+                          <div className="flex items-center gap-2">
+                            <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                            Processing...
+                          </div>
+                        ) : (
+                          <div className="flex items-center justify-center gap-2">
+                            <IndianRupee className="h-5 w-5" />
+                            <span>Checkout with Razorpay</span>
+                          </div>
+                        )}
+                      </Button>
+                      
+                      {/* Security Info */}
+                      <div className="mt-3 text-center">
+                        <p className="text-xs sm:text-sm text-gray-400">
+                          🔒 Secure payment powered by Razorpay
+                        </p>
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
           </div>
         </div>
       </div>

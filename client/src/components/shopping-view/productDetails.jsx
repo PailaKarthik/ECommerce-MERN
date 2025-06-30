@@ -235,7 +235,7 @@ const ProductDetailsDialog = ({ open, setOpen, productDetails, handleAddToCart }
             {productDetails?.tshirtSizes !== "-" && productDetails?.tshirtSizes && (
               <div className="flex flex-col gap-1">
                 <span>
-                  Available T-Shirt Sizes :{" "}
+                  Available Shirt Sizes :{" "}
                   <span className="font-extrabold text-orange-100">
                     {productDetails.tshirtSizes}
                   </span>

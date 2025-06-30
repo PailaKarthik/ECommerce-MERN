@@ -5,7 +5,6 @@ import {
   CardHeader,
   CardTitle,
   CardContent,
-  CardFooter,
 } from "../ui/card";
 import CommonForm from "../common/form";
 import { MapPinPlus } from "lucide-react";
@@ -18,6 +17,7 @@ import {
 } from "@/store/shop/address-slice";
 import AddressCard from "./address-card";
 import { toast } from "sonner";
+import { motion } from "framer-motion";
 
 const initialAddressFormData = {
   address: "",
@@ -26,163 +26,213 @@ const initialAddressFormData = {
   phone: "",
   notes: "",
 };
-import { motion } from "framer-motion";
 
-const ShopAddress = ({setCurrentSelectedAddress}) => {
+const ShopAddress = ({ setCurrentSelectedAddress }) => {
   const [formData, setFormData] = useState(initialAddressFormData);
-  const dispatch = useDispatch();
-  const { user } = useSelector((state) => state.auth);
-  const { addressList } = useSelector((state) => state.shoppingAddress);
+  const [showForm, setShowForm] = useState(false);
   const [currentEditedId, setCurrentEditedId] = useState(null);
   const [selectedAddressId, setSelectedAddressId] = useState(null);
 
-  const handleSelectedAddressId = (addressId) => {
-    setSelectedAddressId(addressId);
-  }
+  const dispatch = useDispatch();
+  const { user } = useSelector((s) => s.auth);
+  const { addressList } = useSelector((s) => s.shoppingAddress);
 
-  const handleManageAddress = (e) => {
+  useEffect(() => {
+    if (user?.id) {
+      dispatch(fetchAllAddress({ userId: user.id }));
+    }
+  }, [dispatch, user]);
+
+  // Simple 10‑digit check
+  const isPhoneValid = (phone) =>
+    /^[0-9]{10}$/.test(phone.replace(/\s+/g, ""));
+
+  const isFormValid = () => isPhoneValid(formData.phone);
+
+  const handleManageAddress = async (e) => {
     e.preventDefault();
 
-    if (addressList?.length >= 3 && currentEditedId === null) {
-      setFormData(initialAddressFormData);
-      toast("You can add max 3 Addresses", {
-        variant : "destructive",
-        icon: "😢",
-        duration: 2000,
-        position: "top-center",
-        style: {
-          backgroundColor: "black",
-          color: "white",
-        },
+    if (!isPhoneValid(formData.phone)) {
+      return toast("Please enter a valid 10‑digit phone number", {
+        variant: "destructive",
       });
-      return;
+    }
+
+    if (!currentEditedId && addressList.length >= 3) {
+      return toast("You can add max 3 Addresses", { variant: "destructive" });
     }
 
     if (currentEditedId) {
-      dispatch(
-        editAddress({ userId: user?.id, addressId: currentEditedId, formData })
-      ).then((response) => {
-        if (response?.payload?.success) {
-          dispatch(fetchAllAddress({ userId: user?.id }));
-          setFormData(initialAddressFormData);
-          setCurrentEditedId(null);
-          toast(response?.payload.message, {
-            icon: "✅",
-            duration: 2000,
-            position: "top-center",
-            style: {
-              backgroundColor: "black",
-              color: "white",
-            },
-          });
-        }
-      });
-    } else {
-      dispatch(addAddress({ userId: user?.id, ...formData })).then(
-        (response) => {
-          if (response?.payload?.success) {
-            dispatch(fetchAllAddress({ userId: user?.id }));
-            setFormData(initialAddressFormData);
-            toast(response?.payload.message, {
-              icon: "✅",
-              duration: 2000,
-              position: "top-center",
-              style: {
-                backgroundColor: "black",
-                color: "white",
-              },
-            });
-          }
-        }
+      // 👇 unwrap formData so the thunk payload shape matches addAddress
+      const response = await dispatch(
+        editAddress({
+          userId: user.id,
+          addressId: currentEditedId,
+          ...formData,
+        })
       );
+
+      if (response.payload?.success) {
+        toast(response.payload.message, { icon: "✅" });
+        dispatch(fetchAllAddress({ userId: user.id }));
+        setShowForm(false);
+        setCurrentEditedId(null);
+        setFormData(initialAddressFormData);
+      }
+    } else {
+      const response = await dispatch(
+        addAddress({ userId: user.id, ...formData })
+      );
+
+      if (response.payload?.success) {
+        toast(response.payload.message, { icon: "✅" });
+        dispatch(fetchAllAddress({ userId: user.id }));
+        setShowForm(false);
+        setFormData(initialAddressFormData);
+      }
     }
   };
 
-  useEffect(() => {
-    dispatch(fetchAllAddress({ userId: user?.id }));
-  }, [dispatch, user]);
-
-  console.log("addressList", addressList);
-
-  function isFormValid() {
-    return Object.keys(formData)
-      .map((key) => formData[key].trim() !== "")
-      .every((item) => item);
-  }
-
   const handleAddressEdit = (addressInfo) => {
     setCurrentEditedId(addressInfo._id);
+    setShowForm(true);
+    // 👇 initialize formData directly
     setFormData({
-      ...formData,
-      address: addressInfo?.address,
-      city: addressInfo?.city,
-      phone: addressInfo?.phone,
-      pincode: addressInfo?.pincode,
-      notes: addressInfo?.notes,
+      address: addressInfo.address || "",
+      city: addressInfo.city || "",
+      pincode: addressInfo.pincode || "",
+      phone: addressInfo.phone || "",
+      notes: addressInfo.notes || "",
     });
   };
 
-  const handleAddressDelete = (addressInfo) => {
-    dispatch(
-      deleteAddress({
-        userId: user?.id,
-        addressId: addressInfo._id,
-      })
-    ).then((response) => {
-      if (response?.payload?.success) {
-        dispatch(fetchAllAddress({ userId: user?.id }));
-        toast(response?.payload.message, {
-          icon: "✅",
-          duration: 2000,
-          position: "top-center",
-          style: {
-            backgroundColor: "black",
-            color: "white",
-          },
-        });
-      }
-    });
+  console.log(formData,"editFormData")
+
+  const handleAddressDelete = async (info) => {
+    const response = await dispatch(
+      deleteAddress({ userId: user.id, addressId: info._id })
+    );
+    if (response.payload?.success) {
+      toast(response.payload.message, { icon: "✅" });
+      dispatch(fetchAllAddress({ userId: user.id }));
+    }
   };
+
+  const handleAddNewAddress = () => {
+    if (addressList.length >= 3) {
+      return toast("You can add max 3 Addresses", { variant: "destructive" });
+    }
+    setShowForm(true);
+    setCurrentEditedId(null);
+    setFormData(initialAddressFormData);
+  };
+
+  const handleSelectedAddressId = (id) => setSelectedAddressId(id);
 
   return (
-    <Card className="mt-2 md:mt-4 bg-gray-800 text-gray-200 border-0 shadow-sm shadow-gray-300 ">
-      <motion.div
-      initial = {{opacity : 0,y : -20}}
-      animate = {{opacity : 100,y : 0}}
-      transition={{duration : 0.7}}
-       className="px-3 grid grid-cols-1 sm:grid-cols-2  gap-4">
-        {addressList && addressList?.length > 0
-          ? addressList.map((address, index) => (
-              <AddressCard
-                key={index}
-                addressInfo={address}
-                handleAddressDelete={handleAddressDelete}
-                handleAddressEdit={handleAddressEdit}
-                setCurrentSelectedAddress ={setCurrentSelectedAddress}
-                selectedAddressId = {selectedAddressId}
-                handleSelectedAddressId = {handleSelectedAddressId}
+    <div className="w-full space-y-4">
+      {addressList.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="space-y-4"
+        >
+          <h3 className="text-xl text-white">
+            Saved Addresses ({addressList.length}/3)
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+            {addressList.map((addr, i) => (
+              <motion.div
+                key={addr._id || i}
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: i * 0.1 }}
+              >
+                <AddressCard
+                  addressInfo={addr}
+                  handleAddressDelete={handleAddressDelete}
+                  handleAddressEdit={handleAddressEdit}
+                  setCurrentSelectedAddress={setCurrentSelectedAddress}
+                  selectedAddressId={selectedAddressId}
+                  handleSelectedAddressId={handleSelectedAddressId}
                 />
-            ))
-          : null}
-      </motion.div>
-      <CardHeader>
-        <CardTitle className="flex gap-1 items-center ">
+              </motion.div>
+            ))}
+          </div>
+        </motion.div>
+      )}
+
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex justify-center"
+      >
+        <button
+          onClick={handleAddNewAddress}
+          disabled={addressList.length >= 3}
+          className={`flex items-center gap-2 px-6 py-3 rounded-lg font-medium ${
+            addressList.length >= 3
+              ? "bg-gray-600 text-gray-400 cursor-not-allowed"
+              : "bg-blue-600 hover:bg-blue-700 text-white"
+          }`}
+        >
           <MapPinPlus className="w-5 h-5" />
-          {currentEditedId ? "Edit Address" : "Add New Address"}
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <CommonForm
-          formControls={addressFormControls}
-          formData={formData}
-          setFormData={setFormData}
-          ButtonText={currentEditedId ? "Edit" : "Add"}
-          onSubmit={handleManageAddress}
-          mode="dark"
-          isButtonDisabled={!isFormValid()}
-        />
-      </CardContent>
-    </Card>
+          Add New Address
+        </button>
+      </motion.div>
+
+      {showForm && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="space-y-4"
+        >
+          <Card className="bg-gray-800 border-gray-600">
+            <CardHeader className="pb-4">
+              <CardTitle className="flex items-center gap-2 text-lg text-white">
+                <MapPinPlus className="w-5 h-5 text-blue-400" />
+                {currentEditedId ? "Edit Address" : "Add New Address"}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <CommonForm
+                formControls={addressFormControls}
+                formData={formData}
+                setFormData={setFormData}
+                ButtonText={currentEditedId ? "Update Address" : "Add Address"}
+                onSubmit={handleManageAddress}
+                mode="dark"
+                isButtonDisabled={!isFormValid()}
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  setShowForm(false);
+                  setCurrentEditedId(null);
+                  setFormData(initialAddressFormData);
+                }}
+                className="w-full px-4 py-2 text-gray-300 bg-gray-700 rounded-lg hover:bg-gray-600"
+              >
+                Cancel
+              </button>
+            </CardContent>
+          </Card>
+        </motion.div>
+      )}
+
+      {addressList.length === 0 && !showForm && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="text-center py-12"
+        >
+          <MapPinPlus className="w-12 h-12 text-gray-500 mx-auto mb-4" />
+          <p className="text-gray-400">
+            No addresses saved yet. Click "Add New Address" to get started.
+          </p>
+        </motion.div>
+      )}
+    </div>
   );
 };
 

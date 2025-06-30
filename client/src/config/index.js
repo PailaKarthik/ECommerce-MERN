@@ -96,10 +96,10 @@ export const addProductFormElements = [
     componentType: "select",
   },
   {
-    label: "Tshirt-Sizes",
+    label: "Shirt-Sizes",
     name: "tshirtSizes",
     type: "text",
-    placeholder: "Enter Tshirts sizes with ',' separated. like L,M,",
+    placeholder: "Enter Shirt sizes with ',' separated. like L,M,",
     componentType: "textarea",
   },
   {
@@ -134,6 +134,11 @@ export const addProductFormElements = [
 ];
 
 export const shoppingViewHeaderMenuItems = [
+    {
+    id: "search",
+    label:"Ϙ Search",
+    path: "/shop/search",
+  },
   {
     id: "home",
     label: "Home",
@@ -174,11 +179,7 @@ export const shoppingViewHeaderMenuItems = [
     label: "Footwear",
     path: "/shop/listing",
   },
-  {
-    id: "search",
-    label: "Search",
-    path: "/shop/search",
-  },
+
 ];
 
 export const filterOptions = {

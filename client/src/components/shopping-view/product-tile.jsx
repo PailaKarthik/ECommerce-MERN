@@ -267,7 +267,7 @@ const ShoppingProductTile = ({
             )}
             {product.tshirtSizes !== "-" && product.tshirtSizes && (
               <span className="bg-gray-700 px-2 py-1 rounded">
-                T-Shirt: {product.tshirtSizes}
+                Shirt: {product.tshirtSizes}
               </span>
             )}
           </div>

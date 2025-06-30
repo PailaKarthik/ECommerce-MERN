@@ -12,13 +12,14 @@ import { addToCart, fetchCartItems } from "@/store/shop/cart-slice";
 import ProductDetailsDailog from "@/components/shopping-view/productDetails";
 import { fetchProductDetails } from "@/store/shop/products-slice";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, X, Sparkles, TrendingUp } from "lucide-react";
+import { Search, X, Sparkles, TrendingUp, Clock } from "lucide-react";
 
 const SearchProducts = () => {
   const [keyword, setkeyword] = useState("");
   const [searchParams, setSearchParams] = useSearchParams();
   const [isSearching, setIsSearching] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [recentSearches, setRecentSearches] = useState([]);
   
   const { searchResults } = useSelector((state) => state.shoppingSearch);
   const { cartItems } = useSelector((state) => state.shoppingCart);
@@ -28,10 +29,16 @@ const SearchProducts = () => {
   const [openDetailsDailog, setOpenDetailsDailog] = useState(false);
   const dispatch = useDispatch();
 
-  // Sample trending searches - you can replace with actual data
+  // Trending searches with better mobile-friendly names
   const trendingSearches = [
-    "Sneakers", "Hoodies", "Dresses", "Jeans", "Accessories", "Bags"
+    "Jockey", "Shirts", "Combos", "Pants", "Clothing", "Dresses"
   ];
+
+  // Load recent searches from memory (you could use localStorage if needed elsewhere)
+  useEffect(() => {
+    // This would normally load from localStorage, but we'll use memory for now
+    setRecentSearches([]);
+  }, []);
 
   useEffect(() => {
     if (keyword && keyword.trim() !== "") {
@@ -41,7 +48,12 @@ const SearchProducts = () => {
         dispatch(getSearchResults(keyword)).finally(() => {
           setIsSearching(false);
         });
-      }, 1000);
+        
+        // Add to recent searches
+        if (!recentSearches.includes(keyword)) {
+          setRecentSearches(prev => [keyword, ...prev.slice(0, 4)]); // Keep only 5 recent
+        }
+      }, 800);
       
       return () => clearTimeout(timer);
     } else {
@@ -49,7 +61,7 @@ const SearchProducts = () => {
       dispatch(resetSearchResults());
       setIsSearching(false);
     }
-  }, [keyword, setSearchParams, dispatch]);
+  }, [keyword, setSearchParams, dispatch,recentSearches]);
 
   const handleAddToCart = (productId, getTotalStock, size) => {
     console.log(cartItems);
@@ -108,8 +120,8 @@ const SearchProducts = () => {
     dispatch(fetchProductDetails(productId));
   };
 
-  const handleTrendingClick = (trend) => {
-    setkeyword(trend);
+  const handleSuggestionClick = (searchTerm) => {
+    setkeyword(searchTerm);
     setShowSuggestions(false);
   };
 
@@ -118,10 +130,13 @@ const SearchProducts = () => {
     setShowSuggestions(false);
   };
 
-  // Close suggestions when clicking outside
+  const handleFocus = () => {
+    setShowSuggestions(true);
+  };
+
   const handleBlur = (e) => {
-    // Delay hiding suggestions to allow clicking on trending buttons
-    setTimeout(() => setShowSuggestions(false), 200);
+    // Delay to allow clicking on suggestions
+    setTimeout(() => setShowSuggestions(false), 150);
   };
 
   useEffect(() => {
@@ -132,11 +147,11 @@ const SearchProducts = () => {
 
   // Loading skeleton component
   const LoadingSkeleton = () => (
-    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
       {Array.from({ length: 8 }).map((_, index) => (
         <div key={index} className="animate-pulse">
-          <div className="bg-gray-700/50 rounded-xl aspect-square mb-4"></div>
-          <div className="space-y-3">
+          <div className="bg-gray-700/50 rounded-xl aspect-square mb-3"></div>
+          <div className="space-y-2">
             <div className="h-4 bg-gray-700/50 rounded w-3/4"></div>
             <div className="h-3 bg-gray-700/50 rounded w-1/2"></div>
             <div className="h-4 bg-gray-700/50 rounded w-1/3"></div>
@@ -151,42 +166,36 @@ const SearchProducts = () => {
 
   return (
     <div className="bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 min-h-screen">
-      {/* Reduced Hero Section with Search */}
-      <div className="relative overflow-hidden">
-        {/* Background Pattern */}
-        <div className="absolute inset-0 bg-gradient-to-r from-blue-600/10 to-purple-600/10"></div>
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-transparent via-gray-900/50 to-gray-900"></div>
-        
-        <div className="relative px-4 md:px-8 lg:px-20 py-8 md:py-12">
+      {/* Simplified Header */}
+      <div className="relative">
+        <div className="px-4 md:px-8 lg:px-20 py-8 md:py-12">
           <motion.div
-            initial={{ opacity: 0, y: 30 }}
+            initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, ease: "easeOut" }}
-            className="max-w-4xl mx-auto text-center"
+            transition={{ duration: 0.6 }}
+            className="max-w-4xl mx-auto"
           >
-            {/* Reduced Title */}
-            <div className="mb-6">
-              <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold bg-gradient-to-r from-white via-gray-100 to-gray-300 bg-clip-text text-transparent mb-3">
-                Find Your Perfect Product
+            {/* Simple Title */}
+            <div className="text-center mb-8">
+              <h1 className="text-2xl md:text-4xl font-bold text-white mb-2">
+                Search Products
               </h1>
-              <p className="text-base md:text-lg text-gray-400 max-w-2xl mx-auto">
-                Search through thousands of premium products and discover exactly what you're looking for
+              <p className="text-gray-400 text-sm md:text-base">
+                Find what you're looking for
               </p>
             </div>
 
-            {/* Search Bar */}
-            <div className="relative max-w-2xl mx-auto">
+            {/* Search Bar Container */}
+            <div className="relative">
               <div className="relative">
-                <div className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400">
-                  <Search className="w-5 h-5" />
-                </div>
+                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                 <Input
                   value={keyword}
                   onChange={(e) => setkeyword(e.target.value)}
-                  onFocus={() => setShowSuggestions(true)}
+                  onFocus={handleFocus}
                   onBlur={handleBlur}
-                  className="pl-12 pr-12 py-4 md:py-6 text-base md:text-lg text-gray-300 bg-gray-800/80 backdrop-blur-lg border-gray-600/50 rounded-2xl focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all duration-300 placeholder:text-gray-500"
-                  placeholder="Search for products, brands, categories..."
+                  className="pl-12 pr-12 py-3 md:py-4 text-white bg-gray-800/90 border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all placeholder:text-gray-500"
+                  placeholder="Search products..."
                 />
                 {keyword && (
                   <button
@@ -203,29 +212,54 @@ const SearchProducts = () => {
                 )}
               </div>
 
-              {/* Trending Suggestions */}
+              {/* Suggestions Dropdown */}
               <AnimatePresence>
                 {showSuggestions && !keyword && (
                   <motion.div
-                    initial={{ opacity: 0, y: 10 }}
+                    initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: 10 }}
-                    className="absolute top-full left-0 right-0 mt-2 bg-gray-800/95 backdrop-blur-lg rounded-2xl border border-gray-700/50 p-6 shadow-2xl z-50"
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.2 }}
+                    className="absolute top-full left-0 right-0 mt-2 bg-gray-800/95 backdrop-blur-sm rounded-xl border border-gray-700 shadow-2xl z-50 overflow-hidden"
                   >
-                    <div className="flex items-center gap-2 mb-4">
-                      <TrendingUp className="w-4 h-4 text-blue-400" />
-                      <span className="text-sm font-medium text-gray-300">Trending Searches</span>
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      {trendingSearches.map((trend, index) => (
-                        <button
-                          key={index}
-                          onClick={() => handleTrendingClick(trend)}
-                          className="px-4 py-2 bg-gray-700/50 hover:bg-gray-600/50 rounded-full text-sm text-gray-300 hover:text-white transition-all duration-200 hover:scale-105"
-                        >
-                          {trend}
-                        </button>
-                      ))}
+                    {/* Recent Searches */}
+                    {recentSearches.length > 0 && (
+                      <div className="p-4 border-b border-gray-700">
+                        <div className="flex items-center gap-2 mb-3">
+                          <Clock className="w-4 h-4 text-gray-400" />
+                          <span className="text-sm font-medium text-gray-300">Recent</span>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          {recentSearches.map((search, index) => (
+                            <button
+                              key={index}
+                              onClick={() => handleSuggestionClick(search)}
+                              className="px-3 py-1.5 bg-gray-700/60 hover:bg-gray-600/60 rounded-lg text-sm text-gray-300 hover:text-white transition-all"
+                            >
+                              {search}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Trending Searches */}
+                    <div className="p-4">
+                      <div className="flex items-center gap-2 mb-3">
+                        <TrendingUp className="w-4 h-4 text-blue-400" />
+                        <span className="text-sm font-medium text-gray-300">Trending</span>
+                      </div>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                        {trendingSearches.map((trend, index) => (
+                          <button
+                            key={index}
+                            onClick={() => handleSuggestionClick(trend)}
+                            className="px-3 py-2 bg-gray-700/40 hover:bg-blue-600/20 hover:border-blue-500/30 border border-transparent rounded-lg text-sm text-gray-300 hover:text-blue-300 transition-all text-left"
+                          >
+                            {trend}
+                          </button>
+                        ))}
+                      </div>
                     </div>
                   </motion.div>
                 )}
@@ -235,27 +269,29 @@ const SearchProducts = () => {
         </div>
       </div>
 
-      {/* Results Section */}
-      <div className="px-4 py-2 md:px-8 lg:px-20 pb-16">
-        {/* Results Header */}
+      {/* Content Section */}
+      <div className="px-4 md:px-8 lg:px-20 pb-16">
+        {/* Search Results Header */}
         {keyword && (
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mb-8"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="mb-6"
           >
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div>
-                <h2 className="text-xl md:text-2xl font-bold text-gray-100 mb-1">
-                  Search Results for "{keyword}"
+                <h2 className="text-lg md:text-xl font-semibold text-white">
+                  Results for "{keyword}"
                 </h2>
-                <p className="text-gray-400">
-                  {searchResults.length} {searchResults.length === 1 ? 'product' : 'products'} found
-                </p>
+                {!isSearching && (
+                  <p className="text-gray-400 text-sm">
+                    {searchResults.length} {searchResults.length === 1 ? 'product' : 'products'} found
+                  </p>
+                )}
               </div>
-              {searchResults.length > 0 && (
-                <div className="bg-gradient-to-r from-blue-600/20 to-purple-600/20 backdrop-blur-sm px-2 py-1 md:px-4 md:py-2 rounded-full border border-gray-600/30">
-                  <span className="text-gray-200 font-medium">
+              {!isSearching && searchResults.length > 0 && (
+                <div className="bg-blue-600/20 px-3 py-1 rounded-full">
+                  <span className="text-blue-300 text-sm font-medium">
                     {searchResults.length} Results
                   </span>
                 </div>
@@ -264,30 +300,26 @@ const SearchProducts = () => {
           </motion.div>
         )}
 
-        {/* Loading State */}
+        {/* Loading */}
         {isSearching && <LoadingSkeleton />}
 
-        {/* No Results State */}
+        {/* No Results */}
         {!isSearching && keyword && searchResults.length === 0 && (
           <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.6 }}
-            className="text-center py-16"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="text-center py-12"
           >
-            <div className="relative mb-8">
-              <div className="text-6xl opacity-20">🔍</div>
-              <div className="absolute inset-0 bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-full blur-2xl"></div>
-            </div>
-            <h3 className="text-2xl font-bold bg-gradient-to-r from-gray-300 to-gray-500 bg-clip-text text-transparent mb-3">
+            <div className="text-4xl mb-4 opacity-50">🔍</div>
+            <h3 className="text-xl font-semibold text-gray-300 mb-2">
               No results found
             </h3>
-            <p className="text-gray-500 text-lg max-w-md mx-auto mb-6">
-              We couldn't find any products matching "{keyword}". Try different keywords or browse our categories.
+            <p className="text-gray-500 mb-6">
+              Try different keywords or check the spelling
             </p>
             <button
               onClick={clearSearch}
-              className="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-full hover:from-blue-700 hover:to-purple-700 transition-all duration-300 hover:scale-105"
+              className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
             >
               Clear Search
             </button>
@@ -299,24 +331,19 @@ const SearchProducts = () => {
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ duration: 0.6, ease: "easeOut" }}
-            className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6"
+            className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6"
           >
             {searchResults.map((item, index) => (
               <motion.div
                 key={item._id}
-                initial={{ opacity: 0, y: 30 }}
+                initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ 
-                  duration: 0.5, 
-                  delay: index * 0.05,
-                  ease: "easeOut" 
+                  duration: 0.4, 
+                  delay: index * 0.05
                 }}
-                whileHover={{ 
-                  y: -8,
-                  transition: { duration: 0.3, ease: "easeOut" }
-                }}
-                className="transform transition-all duration-300 hover:shadow-2xl hover:shadow-blue-500/10"
+                whileHover={{ y: -4 }}
+                className="transform transition-transform"
               >
                 <ShoppingProductTile
                   product={item}
@@ -328,24 +355,23 @@ const SearchProducts = () => {
           </motion.div>
         )}
 
-        {/* Welcome State - Only show when no keyword AND no suggestions are visible */}
-        {!keyword && !showSuggestions && (
+        {/* Welcome State - Only show when not searching, no keyword, and suggestions not visible */}
+        {!keyword && !showSuggestions && !isSearching && (
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.2 }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.3 }}
             className="text-center py-16"
           >
-            <div className="relative mb-8">
-              <Sparkles className="w-16 h-16 text-blue-400 mx-auto opacity-60" />
-              <div className="absolute inset-0 bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-full blur-2xl"></div>
+            <div className="mb-6">
+              <Sparkles className="w-12 h-12 text-blue-400/60 mx-auto mb-4" />
+              <h3 className="text-xl font-semibold text-gray-300 mb-2">
+                Ready to explore?
+              </h3>
+              <p className="text-gray-500">
+                Click the search bar to see trending products and start your search
+              </p>
             </div>
-            <h3 className="text-2xl font-bold bg-gradient-to-r from-gray-300 to-gray-500 bg-clip-text text-transparent mb-3">
-              Start Your Search Journey
-            </h3>
-            <p className="text-gray-500 text-lg max-w-md mx-auto">
-              Enter a keyword above to discover amazing products tailored just for you
-            </p>
           </motion.div>
         )}
       </div>

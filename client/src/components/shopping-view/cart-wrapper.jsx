@@ -61,9 +61,9 @@ const UserCartWrapper = ({ cartItems, setOpenCartSheet }) => {
 
       {/* Footer: total and checkout section */}
       {cartItems && cartItems.items && cartItems.items.length > 0 && (
-        <div className="flex-shrink-0 px-2 py-4 border-t border-gray-700 bg-gray-900/50 backdrop-blur-sm">
+        <div className="flex-shrink-0 px-2 py-2 md:py-4 border-t border-gray-700 bg-gray-900/50 backdrop-blur-sm">
           {/* Subtotal */}
-          <div className="flex justify-between items-center mb-4 p-3 bg-gray-800/50 rounded-lg">
+          <div className="flex justify-between items-center mb-2 md:mb-4 p-1 md:p-3 bg-gray-800/50 rounded-lg">
             <div className="flex flex-col">
               <span className="text-gray-400 text-sm">Subtotal</span>
               <span className="font-bold text-lg lg:text-xl text-gray-100">
@@ -85,15 +85,15 @@ const UserCartWrapper = ({ cartItems, setOpenCartSheet }) => {
               navigate("/shop/checkout");
               setOpenCartSheet(false);
             }}
-            className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-bold text-base lg:text-lg py-3 lg:py-4 rounded-lg transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] shadow-lg hover:shadow-xl"
+            className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-bold text-base lg:text-lg py-2 lg:py-4 rounded-lg transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] shadow-lg hover:shadow-xl"
           >
             <CreditCard className="mr-2" size={20} />
             Proceed to Checkout
           </Button>
 
           {/* Payment Methods */}
-          <div className="mt-4 pt-4 border-t border-gray-700">
-            <p className="text-center text-gray-400 text-xs mb-3">We accept</p>
+          <div className="mt-2 md:mt-4 pt-2 md:pt-4 border-t border-gray-700">
+            <p className="text-center text-gray-400 text-xs mb-2 md:mb-3">We accept</p>
             <div className="flex justify-center items-center gap-3 flex-wrap">
               {/* Visa */}
               <div className="bg-blue-600 text-white px-3 py-1.5 rounded text-xs font-bold">
@@ -112,9 +112,9 @@ const UserCartWrapper = ({ cartItems, setOpenCartSheet }) => {
               <div className="bg-purple-600 text-white px-3 py-1.5 rounded text-xs font-bold">
                 UPI
               </div>
-              {/* PayPal */}
+              {/* Phonepe */}
               <div className="bg-blue-500 text-white px-3 py-1.5 rounded text-xs font-bold">
-                PayPal
+                Phonepe
               </div>
               {/* GPay */}
               <div className="bg-gray-700 text-white px-3 py-1.5 rounded text-xs font-bold border border-gray-600">
