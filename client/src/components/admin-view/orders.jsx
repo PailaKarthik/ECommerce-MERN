@@ -26,12 +26,15 @@ import {
   Clock,
   CheckCircle,
   XCircle,
+  Truck,
+  FileText,
+  MessageSquare,
 } from "lucide-react";
 import { Badge } from "../ui/badge";
 
 const AdminOrdersList = () => {
   const [openOrderDetailsDialog, setOpenOrderDetailsDialog] = useState(false);
-  const [activeFilter, setActiveFilter] = useState("pending");
+  const [activeFilter, setActiveFilter] = useState("requests");
   const { orderList, orderDetails } = useSelector((state) => state.adminOrders);
   const dispatch = useDispatch();
 
@@ -51,29 +54,31 @@ const AdminOrdersList = () => {
 
   const filterButtons = [
     {
-      key: "confirmed",
-      label: "Confirmed",
-      icon: CheckCircle,
+      key: "requests",
+      label: "Requests",
+      icon: FileText,
+      color: "from-orange-500 to-red-500",
+      hoverColor: "from-orange-600 to-red-600",
+      statuses: ["CONFIRMED", "CONFIRMED"], // All statuses except inShipping, rejected, delivered
+      description: "New orders requiring attention"
+    },
+    {
+      key: "shipping",
+      label: "Shipping",
+      icon: Truck,
       color: "from-blue-500 to-cyan-500",
       hoverColor: "from-blue-600 to-cyan-600",
-      statuses: ["confirmed"],
+      statuses: ["inShipping"],
+      description: "Orders currently in transit"
     },
     {
-      key: "pending",
-      label: "Pending",
-      icon: Clock,
-      color: "from-yellow-500 to-orange-500",
-      hoverColor: "from-yellow-600 to-orange-600",
-      statuses: ["pending", "inShipping", "inProcess"],
-    },
-
-    {
-      key: "delivered",
-      label: "Delivered",
-      icon: Package,
+      key: "responded",
+      label: "Responded",
+      icon: MessageSquare,
       color: "from-green-500 to-emerald-500",
       hoverColor: "from-green-600 to-emerald-600",
-      statuses: ["delivered", "rejected"],
+      statuses: ["rejected", "delivered"],
+      description: "Completed or rejected orders"
     },
   ];
 
@@ -86,7 +91,7 @@ const AdminOrdersList = () => {
       case "delivered":
         return "bg-green-500/20 text-green-400 border-green-500/30";
       case "inShipping":
-        return "bg-yellow-500/20 text-yellow-400 border-yellow-500/30";
+        return "bg-cyan-500/20 text-cyan-400 border-cyan-500/30";
       case "pending":
         return "bg-orange-500/20 text-orange-400 border-orange-500/30";
       default:
@@ -95,26 +100,56 @@ const AdminOrdersList = () => {
   };
 
   const formatDate = (dateString) => {
-    return dateString.split("T")[0].split("-").reverse().join(" / ");
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-IN', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    });
+  };
+
+  const formatDateTime = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleString('en-IN', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
   };
 
   const getFilteredOrders = () => {
-    if (!orderList) return [];
+    if (!orderList || !Array.isArray(orderList)) return [];
 
     const currentFilter = filterButtons.find((f) => f.key === activeFilter);
-    return orderList.filter((order) =>
+    const filtered = orderList.filter((order) =>
       currentFilter.statuses.includes(order.orderStatus)
     );
+
+    // Sort by date - newest first
+    return filtered.sort((a, b) => new Date(b.orderDate) - new Date(a.orderDate));
   };
 
   const filteredOrders = getFilteredOrders();
 
   const getOrderCount = (filterKey) => {
-    if (!orderList) return 0;
+    if (!orderList || !Array.isArray(orderList)) return 0;
     const filter = filterButtons.find((f) => f.key === filterKey);
     return orderList.filter((order) =>
       filter.statuses.includes(order.orderStatus)
     ).length;
+  };
+
+  const getStatusDisplayName = (status) => {
+    const statusMap = {
+      pending: "Pending",
+      confirmed: "Confirmed",
+      inShipping: "In Shipping",
+      delivered: "Delivered",
+      rejected: "Rejected"
+    };
+    return statusMap[status] || status;
   };
 
   return (
@@ -124,7 +159,7 @@ const AdminOrdersList = () => {
       transition={{ duration: 0.6, ease: "easeOut" }}
       className="w-full"
     >
-      <Card className=" bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-gray-100 border border-gray-700/50 shadow-2xl shadow-gray-900/50 backdrop-blur-sm">
+      <Card className="bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-gray-100 border border-gray-700/50 shadow-2xl shadow-gray-900/50 backdrop-blur-sm">
         <CardHeader className="pb-6">
           <CardTitle className="text-xl md:text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent flex items-center gap-2 mb-6">
             <Package className="w-6 h-6 text-blue-400" />
@@ -143,7 +178,7 @@ const AdminOrdersList = () => {
                   key={filter.key}
                   onClick={() => setActiveFilter(filter.key)}
                   className={`
-                    relative px-4 py-2.5 rounded-xl font-semibold text-sm transition-all duration-300 flex items-center gap-2 min-w-fit
+                    relative px-4 py-3 rounded-xl font-semibold text-sm transition-all duration-300 flex flex-col items-center gap-1 min-w-[120px]
                     ${
                       isActive
                         ? `bg-gradient-to-r ${filter.color} text-white shadow-lg transform scale-105`
@@ -152,9 +187,12 @@ const AdminOrdersList = () => {
                   `}
                   whileHover={{ scale: isActive ? 1.05 : 1.02 }}
                   whileTap={{ scale: 0.98 }}
+                  title={filter.description}
                 >
-                  <IconComponent className="w-4 h-4" />
-                  <span>{filter.label}</span>
+                  <div className="flex items-center gap-2">
+                    <IconComponent className="w-4 h-4" />
+                    <span>{filter.label}</span>
+                  </div>
                   {count > 0 && (
                     <span
                       className={`
@@ -166,7 +204,7 @@ const AdminOrdersList = () => {
                       }
                     `}
                     >
-                      {count}
+                      {count} orders
                     </span>
                   )}
                 </motion.button>
@@ -186,13 +224,13 @@ const AdminOrdersList = () => {
                       Order ID
                     </TableHead>
                     <TableHead className="text-gray-300 font-semibold py-4">
-                      Order Date
+                      Order Date & Time
                     </TableHead>
                     <TableHead className="text-gray-300 font-semibold py-4">
                       Status
                     </TableHead>
                     <TableHead className="text-gray-300 font-semibold py-4">
-                      Price
+                      Amount
                     </TableHead>
                     <TableHead className="text-gray-300 font-semibold py-4">
                       Actions
@@ -210,10 +248,13 @@ const AdminOrdersList = () => {
                           className="border-b border-gray-700/50 hover:bg-gray-800/50 transition-all duration-300"
                         >
                           <TableCell className="font-mono text-sm text-gray-300 py-4">
-                            {order._id.slice(-8)}
+                            #{order._id.slice(-8).toUpperCase()}
                           </TableCell>
                           <TableCell className="text-gray-300 py-4">
-                            {formatDate(order.orderDate)}
+                            <div className="flex flex-col">
+                              <span className="font-medium">{formatDate(order.orderDate)}</span>
+                              <span className="text-xs text-gray-400">{formatDateTime(order.orderDate).split(',')[1]}</span>
+                            </div>
                           </TableCell>
                           <TableCell className="py-4">
                             <Badge
@@ -221,11 +262,11 @@ const AdminOrdersList = () => {
                                 order.orderStatus
                               )} capitalize font-medium border px-3 py-1 rounded-full`}
                             >
-                              {order.orderStatus}
+                              {getStatusDisplayName(order.orderStatus)}
                             </Badge>
                           </TableCell>
                           <TableCell className="font-bold text-green-400 py-4">
-                            ₹{order.totalAmount}.00
+                            ₹{order.totalAmount.toLocaleString('en-IN')}{order.totalAmount % 1 === 0 ? '.00' : ''}
                           </TableCell>
                           <TableCell className="py-4">
                             <Dialog
@@ -275,8 +316,8 @@ const AdminOrdersList = () => {
                         <div className="text-xs text-gray-400 mb-1">
                           Order ID
                         </div>
-                        <div className="font-mono text-sm text-gray-200 break-all">
-                          {order._id}
+                        <div className="font-mono text-sm text-gray-200">
+                          #{order._id.slice(-8).toUpperCase()}
                         </div>
                       </div>
                       <Badge
@@ -284,26 +325,26 @@ const AdminOrdersList = () => {
                           order.orderStatus
                         )} capitalize font-medium border px-2 py-1 rounded-full text-xs ml-2 flex-shrink-0`}
                       >
-                        {order.orderStatus}
+                        {getStatusDisplayName(order.orderStatus)}
                       </Badge>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4 mb-4">
+                    <div className="grid grid-cols-1 gap-3 mb-4">
                       <div className="flex items-center gap-2">
                         <Calendar className="w-4 h-4 text-blue-400 flex-shrink-0" />
-                        <div>
-                          <div className="text-xs text-gray-400">Date</div>
+                        <div className="flex-1">
+                          <div className="text-xs text-gray-400">Date & Time</div>
                           <div className="text-sm text-gray-200">
-                            {formatDate(order.orderDate)}
+                            {formatDateTime(order.orderDate)}
                           </div>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
                         <DollarSign className="w-4 h-4 text-green-400 flex-shrink-0" />
-                        <div>
+                        <div className="flex-1">
                           <div className="text-xs text-gray-400">Amount</div>
                           <div className="text-sm font-bold text-green-400">
-                            ₹{order.totalAmount}.00
+                            ₹{order.totalAmount.toLocaleString('en-IN')}{order.totalAmount % 1 === 0 ? '.00' : ''}
                           </div>
                         </div>
                       </div>
@@ -344,15 +385,15 @@ const AdminOrdersList = () => {
                   <>
                     <IconComponent className="w-16 h-16 text-gray-600 mb-4" />
                     <h3 className="text-lg font-semibold text-gray-400 mb-2">
-                      No {currentFilter.label} Orders
+                      No {currentFilter.label}
                     </h3>
-                    <p className="text-gray-500 text-center">
-                      {activeFilter === "pending" &&
-                        "No pending or shipping orders at the moment."}
-                      {activeFilter === "confirmed" &&
-                        "No confirmed orders to display."}
-                      {activeFilter === "delivered" &&
-                        "No delivered or completed orders found."}
+                    <p className="text-gray-500 text-center max-w-md">
+                      {activeFilter === "requests" &&
+                        "No pending requests at the moment. New orders will appear here when they need your attention."}
+                      {activeFilter === "shipping" &&
+                        "No orders currently in shipping. Orders marked as 'In Shipping' will appear here."}
+                      {activeFilter === "responded" &&
+                        "No completed orders to display. Delivered and rejected orders will appear here."}
                     </p>
                   </>
                 );

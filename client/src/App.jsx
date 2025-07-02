@@ -2,7 +2,7 @@ import React, { useEffect } from "react";
 import { useRoutes } from "react-router";
 import AuthLayout from "./components/auth/layout";
 import AuthLogin from "./pages/auth/login";
-import AuthRegister from "./pages/auth/register";
+// import AuthRegister from "./pages/auth/register";
 import AdminLayout from "./components/admin-view/layout";
 import AdminDashboard from "./pages/admin-view/dashboard";
 import AdminProducts from "./pages/admin-view/products";
@@ -30,8 +30,9 @@ const App = () => {
   const dispatch = useDispatch();
 
   useEffect(() => {
-    const token = JSON.parse(sessionStorage.getItem("token"));
-    dispatch(checkAuth(token));
+    // const token = JSON.parse(sessionStorage.getItem("token"));
+    // dispatch(checkAuth(token));
+    dispatch(checkAuth());
   }, [dispatch]);
 
   const allRoutes = useRoutes([
@@ -53,10 +54,10 @@ const App = () => {
           path: "login",
           element: <AuthLogin />,
         },
-        {
-          path: "register",
-          element: <AuthRegister />,
-        },
+        // {
+        //   path: "register",
+        //   element: <AuthRegister />,
+        // },
       ],
     },
 

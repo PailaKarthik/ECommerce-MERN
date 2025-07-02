@@ -522,7 +522,7 @@ const ShoppingHome = () => {
         productDetails={productDetails}
       />
 
-      <style jsx>{`
+      <style jsx="true">{`
         .scrollbar-hide {
           -ms-overflow-style: none;
           scrollbar-width: none;

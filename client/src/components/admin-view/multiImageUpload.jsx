@@ -12,7 +12,6 @@ const MultiImageUpload = ({
   setUploadedUrls,
   loading,
   setLoading,
-  currentEditedId,
 }) => {
   const inputRef = useRef(null);
   const [filesToUpload, setFilesToUpload] = useState([]);
@@ -69,7 +68,7 @@ const MultiImageUpload = ({
         )}
         <div onClick={()=>inputRef.current.click()} className="flex items-center justify-center w-24 h-24 border-2 border-gray-500 border-dashed rounded-lg cursor-pointer">
           {loading ? <Loader2 className="animate-spin"/> : <CloudUpload className="text-gray-400"/>}
-          <Input type="file" multiple className="hidden" ref={inputRef} accept="image/*" onChange={handleFiles} disabled={currentEditedId!==null}/>
+          <Input type="file" multiple className="hidden" ref={inputRef} accept="image/*" onChange={handleFiles} />
         </div>
       </div>
     </div>
