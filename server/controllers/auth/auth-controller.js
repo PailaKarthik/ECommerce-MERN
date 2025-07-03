@@ -3,7 +3,7 @@ require("dotenv").config();
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const User = require("../../models/User");
-const admin = require('../../database/firebaseAdmin')
+const admin = require("../../database/firebaseAdmin");
 
 const googleLogin = async (req, res) => {
   const { idToken } = req.body;
@@ -27,14 +27,23 @@ const googleLogin = async (req, res) => {
 
     // Issue your own JWT & cookie
     const token = jwt.sign(
-      { id: user._id, role: user.role, email: user.email, username: user.username },
+      {
+        id: user._id,
+        role: user.role,
+        email: user.email,
+        username: user.username,
+      },
       process.env.JWT_SECRET,
       { expiresIn: process.env.JWT_EXPIRATION || "30d" }
     );
 
     res
       .cookie("token", token, { httpOnly: true, secure: true })
-      .json({ success: true, message : "User Login Successfully !" , user: { id: user._id, username: user.username, email: user.email } });
+      .json({
+        success: true,
+        message: "User Login Successfully !",
+        user: { id: user._id, username: user.username, email: user.email },
+      });
   } catch (err) {
     console.error(err);
     res.status(401).json({ success: false, message: "Invalid Google token" });
