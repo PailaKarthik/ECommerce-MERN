@@ -208,7 +208,7 @@ const ShoppingHeader = () => {
   const { user } = useSelector((state) => state.auth);
 
   return (
-    <header className="sticky top-0 z-50 w-full bg-gray-900/95 backdrop-blur-md text-gray-200 border-b border-gray-800 shadow-lg">
+    <header className="fixed top-0 left-0 z-50 w-full bg-gray-900/95 backdrop-blur-md text-gray-200 border-b border-gray-800 shadow-lg">
       <div className="flex h-14 items-center justify-between px-3 md:px-4 max-w-7xl mx-auto">
         {/* Logo */}
         <Link 
@@ -219,7 +219,7 @@ const ShoppingHeader = () => {
             <ShoppingBag className="w-5 h-5 text-gray-900" />
           </div>
           <span className="font-bold text-lg md:text-xl bg-gradient-to-r from-orange-400 to-amber-400 bg-clip-text text-transparent group-hover:from-orange-300 group-hover:to-amber-300 transition-all duration-200">
-            ECommerce
+            Urban Trendz
           </span>
         </Link>
 

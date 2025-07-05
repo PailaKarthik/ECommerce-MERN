@@ -1,11 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { addressFormControls } from "@/config";
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardContent,
-} from "../ui/card";
+import { Card, CardHeader, CardTitle, CardContent } from "../ui/card";
 import CommonForm from "../common/form";
 import { MapPinPlus } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
@@ -44,8 +39,7 @@ const ShopAddress = ({ setCurrentSelectedAddress }) => {
   }, [dispatch, user]);
 
   // Simple 10‑digit check
-  const isPhoneValid = (phone) =>
-    /^[0-9]{10}$/.test(phone.replace(/\s+/g, ""));
+  const isPhoneValid = (phone) => /^[0-9]{10}$/.test(phone.replace(/\s+/g, ""));
 
   const isFormValid = () => isPhoneValid(formData.phone);
 
@@ -68,7 +62,7 @@ const ShopAddress = ({ setCurrentSelectedAddress }) => {
         editAddress({
           userId: user.id,
           addressId: currentEditedId,
-          ...formData,
+          formData,
         })
       );
 
@@ -106,7 +100,6 @@ const ShopAddress = ({ setCurrentSelectedAddress }) => {
     });
   };
 
-  console.log(formData,"editFormData")
 
   const handleAddressDelete = async (info) => {
     const response = await dispatch(

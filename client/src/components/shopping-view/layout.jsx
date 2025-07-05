@@ -7,7 +7,7 @@ const ShpppingLayout = () => {
     <div className="flex flex-col">
       {/* common header */}
       <ShoppingHeader />
-      <main className="flex-1 overflow-auto scrollbar-hide">
+      <main className="pt-14 flex-1 overflow-auto scrollbar-hide">
         <Outlet />
       </main>
     </div>
