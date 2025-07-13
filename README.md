@@ -6,7 +6,7 @@
 
 ## 🚀 Live Demo
 
-👉 [https://ecommerce-mern-1-seft.onrender.com/](https://ecommerce-mern-1-seft.onrender.com/)
+👉 [https://urbantrendzmdl.com/](https://urbantrendzmdl.com/)
 
 ## 📂 Repository
 
