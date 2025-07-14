@@ -50,37 +50,37 @@ const googleLogin = async (req, res) => {
   }
 };
 
-// const registerUser = async (req, res) => {
-//   const { username, email, password } = req.body;
+const registerUser = async (req, res) => {
+  const { username, email, password } = req.body;
 
-//   try {
-//     const checkUser = await User.findOne({ email });
-//     if (checkUser) {
-//       return res.json({
-//         success: false,
-//         message: "User already exists with this email",
-//       });
-//     }
+  try {
+    const checkUser = await User.findOne({ email });
+    if (checkUser) {
+      return res.json({
+        success: false,
+        message: "User already exists with this email",
+      });
+    }
 
-//     const hashPassword = await bcrypt.hash(password, 12);
-//     const newUser = User.create({
-//       username,
-//       email,
-//       password: hashPassword,
-//     });
-//     console.log("serverside : ", newUser);
-//     res.status(201).json({
-//       success: true,
-//       message: "User registered successfully",
-//     });
-//   } catch (e) {
-//     console.log(e);
-//     res.status(500).json({
-//       success: false,
-//       message: "Internal server error",
-//     });
-//   }
-// };
+    const hashPassword = await bcrypt.hash(password, 12);
+    const newUser = User.create({
+      username,
+      email,
+      password: hashPassword,
+    });
+    console.log("serverside : ", newUser);
+    res.status(201).json({
+      success: true,
+      message: "User registered successfully",
+    });
+  } catch (e) {
+    console.log(e);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
+};
 
 //login
 const loginUser = async (req, res) => {
@@ -215,7 +215,7 @@ const authMiddleware = async (req, res, next) => {
 // };
 
 module.exports = {
-  // registerUser,
+  registerUser,
   googleLogin,
   loginUser,
   logoutUser,

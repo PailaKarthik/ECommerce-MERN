@@ -22,6 +22,7 @@ import { Navigate } from "react-router-dom";
 import PaypalReturnPage from "./pages/shopping-view/paypal-return";
 import PaymentSuccessPage from "./pages/shopping-view/payment-success";
 import SearchProducts from "./pages/shopping-view/search";
+import AuthRegister from "./pages/auth/register";
 
 const App = () => {
   const { isAuthenticated, user, isLoading } = useSelector(
@@ -54,10 +55,10 @@ const App = () => {
           path: "login",
           element: <AuthLogin />,
         },
-        // {
-        //   path: "register",
-        //   element: <AuthRegister />,
-        // },
+        {
+          path: "register",
+          element: <AuthRegister />,
+        },
       ],
     },
 
