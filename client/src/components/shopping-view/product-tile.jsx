@@ -259,18 +259,6 @@ const ShoppingProductTile = ({
               ₹{product.price}.00
             </span>
           </div>
-          <div className="text-xs text-gray-400 mt-2">
-            {product.pantSizes !== "-" && product.pantSizes && (
-              <span className="bg-gray-700 px-2 py-1 rounded mr-2">
-                Pant: {product.pantSizes}
-              </span>
-            )}
-            {product.tshirtSizes !== "-" && product.tshirtSizes && (
-              <span className="bg-gray-700 px-2 py-1 rounded">
-                Shirt: {product.tshirtSizes}
-              </span>
-            )}
-          </div>
         </CardContent>
       </div>
 

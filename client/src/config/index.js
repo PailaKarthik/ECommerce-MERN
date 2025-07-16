@@ -98,14 +98,14 @@ export const addProductFormElements = [
     label: "Shirt-Sizes",
     name: "tshirtSizes",
     type: "text",
-    placeholder: "Enter Shirt sizes with ',' separated. like L,M,",
+    placeholder: "Enter Shirt sizes with ',' separated. like L=21,M=10,",
     componentType: "textarea",
   },
   {
     label: "Pant-Sizes",
     name: "pantSizes",
     type: "text",
-    placeholder: "Enter Pant sizes with ',' separated. like 26,28,30",
+    placeholder: "Enter Pant sizes with ',' separated. like 26=4,28=10,30=34",
     componentType: "textarea",
   },
   {

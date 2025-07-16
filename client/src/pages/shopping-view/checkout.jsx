@@ -102,7 +102,7 @@ const ShoppingCheckout = () => {
       {/* Main Content */}
       <div className="bg-gray-900 min-h-screen">
         <div className="px-4 sm:px-6 py-6 lg:py-8">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-4">
             
             {/* Address Section - Full width on mobile, left column on desktop */}
             <div className="lg:col-span-7 xl:col-span-8">

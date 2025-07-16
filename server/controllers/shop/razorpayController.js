@@ -7,6 +7,72 @@ const Product = require("../../models/Product");
 const User = require("../../models/User");
 
 const razorpay = buildClient();
+
+// Helper function to parse size string (e.g., "L=21,M=8,S=12")
+const parseSizeString = (sizeString) => {
+  if (!sizeString || sizeString === "-") return {};
+  
+  const sizes = {};
+  sizeString.split(',').forEach(item => {
+    const [size, quantity] = item.trim().split('=');
+    if (size && quantity) {
+      sizes[size.trim()] = parseInt(quantity) || 0;
+    }
+  });
+  return sizes;
+};
+
+// Helper function to convert size object back to string
+const sizesToString = (sizesObj) => {
+  const entries = Object.entries(sizesObj).filter(([_, qty]) => qty > 0);
+  return entries.length > 0 ? entries.map(([size, qty]) => `${size}=${qty}`).join(',') : "-";
+};
+
+// Helper function to update product sizes
+const updateProductSizes = async (product, orderedSize, orderedQuantity) => {
+  if (!orderedSize || orderedSize === "-") {
+    // No size specified, just update general quantity
+    product.quantity = Math.max(0, product.quantity - orderedQuantity);
+    return;
+  }
+
+  // Check if product uses new unified sizes format
+  if (product.sizes && product.sizes !== "-") {
+    const currentSizes = parseSizeString(product.sizes);
+    
+    if (currentSizes[orderedSize]) {
+      currentSizes[orderedSize] = Math.max(0, currentSizes[orderedSize] - orderedQuantity);
+      product.sizes = sizesToString(currentSizes);
+    }
+  } else {
+    // Handle legacy tshirtSizes and pantSizes format
+    let updated = false;
+    
+    // Check and update tshirtSizes
+    if (product.tshirtSizes && product.tshirtSizes !== "-") {
+      const tshirtSizes = parseSizeString(product.tshirtSizes);
+      if (tshirtSizes[orderedSize]) {
+        tshirtSizes[orderedSize] = Math.max(0, tshirtSizes[orderedSize] - orderedQuantity);
+        product.tshirtSizes = sizesToString(tshirtSizes);
+        updated = true;
+      }
+    }
+    
+    // Check and update pantSizes if not found in tshirtSizes
+    if (!updated && product.pantSizes && product.pantSizes !== "-") {
+      const pantSizes = parseSizeString(product.pantSizes);
+      if (pantSizes[orderedSize]) {
+        pantSizes[orderedSize] = Math.max(0, pantSizes[orderedSize] - orderedQuantity);
+        product.pantSizes = sizesToString(pantSizes);
+        updated = true;
+      }
+    }
+  }
+  
+  // Always update general quantity as well
+  product.quantity = Math.max(0, product.quantity - orderedQuantity);
+};
+
 // Create a Razorpay order
 exports.createOrder = async (req, res) => {
   try {
@@ -100,19 +166,75 @@ exports.capturePayment = async (req, res) => {
         .status(404)
         .json({ success: false, message: "Order not found" });
 
+    // Check stock availability before processing
+    for (let item of order.cartItems) {
+      const product = await Product.findById(item.productId);
+      if (!product) throw new Error(`Product not found: ${item.productId}`);
+      
+      // Check if there's enough stock for the specific size
+      if (item.size && item.size !== "-") {
+        let sizeAvailable = false;
+        let availableQuantity = 0;
+        
+        // Check new unified sizes format
+        if (product.sizes && product.sizes !== "-") {
+          const currentSizes = parseSizeString(product.sizes);
+          if (currentSizes[item.size]) {
+            availableQuantity = currentSizes[item.size];
+            sizeAvailable = true;
+          }
+        } else {
+          // Check legacy formats
+          if (product.tshirtSizes && product.tshirtSizes !== "-") {
+            const tshirtSizes = parseSizeString(product.tshirtSizes);
+            if (tshirtSizes[item.size]) {
+              availableQuantity = tshirtSizes[item.size];
+              sizeAvailable = true;
+            }
+          }
+          
+          if (!sizeAvailable && product.pantSizes && product.pantSizes !== "-") {
+            const pantSizes = parseSizeString(product.pantSizes);
+            if (pantSizes[item.size]) {
+              availableQuantity = pantSizes[item.size];
+              sizeAvailable = true;
+            }
+          }
+        }
+        
+        if (!sizeAvailable || availableQuantity < item.quantity) {
+          throw new Error(`Insufficient stock for ${product.title} in size ${item.size}`);
+        }
+      } else {
+        // No size specified, check general quantity
+        if (product.quantity < item.quantity) {
+          throw new Error(`Insufficient stock for ${product.title}`);
+        }
+      }
+    }
+
+    // Update order status
     order.paymentStatus = "PAID";
     order.orderStatus = "CONFIRMED";
     order.payerId = razorpayPaymentId;
 
+    // Update product quantities and sizes
     for (let item of order.cartItems) {
       const product = await Product.findById(item.productId);
       if (!product) throw new Error(`Product not found: ${item.productId}`);
-      product.quantity -= item.quantity;
-      if (product.quantity < 0)
+      
+      // Update sizes and quantity
+      await updateProductSizes(product, item.size, item.quantity);
+      
+      // Validate that quantity didn't go negative
+      if (product.quantity < 0) {
         throw new Error(`Insufficient stock for ${product.title}`);
+      }
+      
       await product.save();
     }
 
+    // Delete cart and save order
     await Cart.findByIdAndDelete(order.cartId);
     await order.save();
 

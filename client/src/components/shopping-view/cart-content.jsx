@@ -165,7 +165,7 @@ const UserCartItemsContent = ({ cartItem }) => {
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.95 }}
       transition={{ duration: 0.5, ease: "easeOut" }}
-      className={`flex items-center gap-2 sm:gap-3 lg:gap-6 p-2 sm:p-3 lg:p-6 rounded-lg bg-gradient-to-r from-gray-800/80 to-gray-700/80 border border-gray-600/50 hover:border-gray-500/50 transition-all duration-300 backdrop-blur-sm ${isDeleting ? 'opacity-50' : ''}`}
+      className={`flex items-center gap-2 sm:gap-3 lg:gap-4 p-2 sm:p-3 lg:p-3 rounded-lg bg-gradient-to-r from-gray-800/80 to-gray-700/80 border border-gray-600/50 hover:border-gray-500/50 transition-all duration-300 backdrop-blur-sm ${isDeleting ? 'opacity-50' : ''}`}
     >
       {/* Product Image - Larger on desktop */}
       <div className="flex-shrink-0">
@@ -174,7 +174,7 @@ const UserCartItemsContent = ({ cartItem }) => {
             <img
               src={productImage}
               alt={cartItem.title}
-              className="w-16 h-16 sm:w-20 sm:h-20 lg:w-32 lg:h-32 object-cover rounded-lg border border-gray-600 group-hover:scale-105 transition-transform duration-300"
+              className="w-16 h-16 sm:w-20 sm:h-20 lg:w-28 lg:h-28 object-cover rounded-lg border border-gray-600 group-hover:scale-105 transition-transform duration-300"
               onError={handleImageError}
               onLoad={handleImageLoad}
             />
@@ -281,34 +281,34 @@ const UserCartItemsContent = ({ cartItem }) => {
           {/* Middle section - Quantity and Price */}
           <div className="flex items-center justify-between mb-4">
             {/* Quantity Controls */}
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1.5">
               <span className="text-sm text-gray-400 font-medium">Quantity:</span>
               <div className="flex items-center border border-gray-600 rounded-lg bg-gray-800/50">
                 <Button
                   disabled={cartItem.quantity <= 1 || isUpdating}
                   onClick={() => handleUpdateQuantity(cartItem, -1)}
-                  className="bg-transparent text-gray-300 hover:text-orange-400 hover:bg-gray-700/50 p-2 border-0 rounded-l-lg transition-colors duration-200 disabled:opacity-50 h-auto"
+                  className="bg-transparent text-gray-300 hover:text-orange-400 hover:bg-gray-700/50 p-1 border-0 rounded-l-lg transition-colors duration-200 disabled:opacity-50 h-auto"
                 >
-                  <Minus className="w-4 h-4" />
+                  <Minus className="w-3 h-3" />
                 </Button>
                 
-                <div className="px-4 py-2 font-bold text-gray-100 bg-gray-800/70 text-base text-center min-w-[3rem]">
+                <div className="p-1 font-bold text-gray-100 bg-gray-800/70 text-base text-center">
                   {cartItem.quantity}
                 </div>
                 
                 <Button
                   disabled={isUpdating}
                   onClick={() => handleUpdateQuantity(cartItem, 1)}
-                  className="bg-transparent text-gray-300 hover:text-orange-400 hover:bg-gray-700/50 p-2 border-0 rounded-r-lg transition-colors duration-200 h-auto"
+                  className="bg-transparent text-gray-300 hover:text-orange-400 hover:bg-gray-700/50 p-1 border-0 rounded-r-lg transition-colors duration-200 h-auto"
                 >
-                  <Plus className="w-4 h-4" />
+                  <Plus className="w-3 h-3" />
                 </Button>
               </div>
             </div>
 
             {/* Price */}
             <div className="text-right">
-              <p className="text-green-400 font-bold text-xl mb-1">
+              <p className="text-green-400 font-semibold text-lg mb-1">
                 ₹{itemTotal.toFixed(2)}
               </p>
               {cartItem.sellPrice > 0 && cartItem.sellPrice < cartItem.price && (
