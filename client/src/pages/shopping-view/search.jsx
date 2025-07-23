@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Input } from "@/components/ui/input";
-import { useSearchParams } from "react-router";
+import { useSearchParams, useNavigate } from "react-router-dom"; // Add useNavigate
 import { useDispatch, useSelector } from "react-redux";
 import {
   getSearchResults,
@@ -20,10 +20,11 @@ const SearchProducts = () => {
   const [isSearching, setIsSearching] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [recentSearches, setRecentSearches] = useState([]);
-  
+  const navigate = useNavigate(); // Add navigate
+
   const { searchResults } = useSelector((state) => state.shoppingSearch);
   const { cartItems } = useSelector((state) => state.shoppingCart);
-  const { user } = useSelector((state) => state.auth);
+  const { user, isAuthenticated } = useSelector((state) => state.auth); // Add isAuthenticated
   const { productDetails } = useSelector((state) => state.shoppingProducts);
 
   const [openDetailsDailog, setOpenDetailsDailog] = useState(false);
@@ -31,7 +32,12 @@ const SearchProducts = () => {
 
   // Trending searches with better mobile-friendly names
   const trendingSearches = [
-    "Jockey", "Shirts", "Combos", "Pants", "Clothing", "Dresses"
+    "Jockey",
+    "Shirts",
+    "Combos",
+    "Pants",
+    "Clothing",
+    "Dresses",
   ];
 
   // Load recent searches from memory (you could use localStorage if needed elsewhere)
@@ -48,22 +54,54 @@ const SearchProducts = () => {
         dispatch(getSearchResults(keyword)).finally(() => {
           setIsSearching(false);
         });
-        
+
         // Add to recent searches
         if (!recentSearches.includes(keyword)) {
-          setRecentSearches(prev => [keyword, ...prev.slice(0, 4)]); // Keep only 5 recent
+          setRecentSearches((prev) => [keyword, ...prev.slice(0, 4)]); // Keep only 5 recent
         }
       }, 800);
-      
+
       return () => clearTimeout(timer);
     } else {
       setSearchParams(new URLSearchParams());
       dispatch(resetSearchResults());
       setIsSearching(false);
     }
-  }, [keyword, setSearchParams, dispatch,recentSearches]);
+  }, [keyword, setSearchParams, dispatch, recentSearches]);
 
   const handleAddToCart = (productId, getTotalStock, size) => {
+    if (size === null) {
+      toast("Enter the size of the product", {
+        icon: "❌",
+        duration: 2000,
+        position: "top-center",
+        style: { backgroundColor: "#1f2937", color: "#f9fafb" },
+      });
+      return;
+    }
+
+    // Check if user is authenticated
+    if (!isAuthenticated) {
+      toast("Please login to add items to cart", {
+        icon: "🔒",
+        duration: 2000,
+        position: "top-center",
+        style: { backgroundColor: "#1f2937", color: "#f9fafb" },
+      });
+      // Store the product details for after login (optional)
+      sessionStorage.setItem(
+        "pendingCartItem",
+        JSON.stringify({
+          productId,
+          quantity: 1,
+          size,
+        })
+      );
+      navigate("/auth/login");
+      return;
+    }
+
+    // Check stock availability for authenticated users
     console.log(cartItems);
     let getCartItems = cartItems.items || [];
     if (getCartItems.length) {
@@ -74,7 +112,7 @@ const SearchProducts = () => {
       if (indexOfCurrentItem > -1) {
         const getQuantity = getCartItems[indexOfCurrentItem].quantity;
         if (getQuantity + 1 > getTotalStock) {
-          toast(`only ${getQuantity} quantity can be added for this item`, {
+          toast(`Only ${getQuantity} quantity can be added for this item`, {
             icon: "❌",
             duration: 2000,
             position: "top-center",
@@ -88,32 +126,23 @@ const SearchProducts = () => {
       }
     }
 
-    if (size === null) {
-      toast(`enter the size of the product`, {
-        icon: "❌",
-        duration: 2000,
-        position: "top-center",
-        style: { backgroundColor: "#1f2937", color: "#f9fafb" },
-      });
-      return;
-    }
-
-    dispatch(addToCart({ userId: user?.id, productId, quantity: 1, size: size })).then(
-      (response) => {
-        if (response.payload?.success) {
-          dispatch(fetchCartItems({ userId: user?.id }));
-          toast(response?.payload.message, {
-            icon: "✅",
-            duration: 1000,
-            position: "top-center",
-            style: {
-              backgroundColor: "#065f46",
-              color: "#f9fafb",
-            },
-          });
-        }
+    // If user is authenticated, proceed with existing logic
+    dispatch(
+      addToCart({ userId: user?.id, productId, quantity: 1, size: size })
+    ).then((response) => {
+      if (response.payload?.success) {
+        dispatch(fetchCartItems({ userId: user?.id }));
+        toast(response?.payload.message, {
+          icon: "✅",
+          duration: 1000,
+          position: "top-center",
+          style: {
+            backgroundColor: "#065f46",
+            color: "#f9fafb",
+          },
+        });
       }
-    );
+    });
   };
 
   const handleGetProductDetails = (productId) => {
@@ -134,7 +163,7 @@ const SearchProducts = () => {
     setShowSuggestions(true);
   };
 
-  const handleBlur = (e) => {
+  const handleBlur = () => {
     // Delay to allow clicking on suggestions
     setTimeout(() => setShowSuggestions(false), 150);
   };
@@ -227,7 +256,9 @@ const SearchProducts = () => {
                       <div className="p-4 border-b border-gray-700">
                         <div className="flex items-center gap-2 mb-3">
                           <Clock className="w-4 h-4 text-gray-400" />
-                          <span className="text-sm font-medium text-gray-300">Recent</span>
+                          <span className="text-sm font-medium text-gray-300">
+                            Recent
+                          </span>
                         </div>
                         <div className="flex flex-wrap gap-2">
                           {recentSearches.map((search, index) => (
@@ -242,12 +273,14 @@ const SearchProducts = () => {
                         </div>
                       </div>
                     )}
-                    
+
                     {/* Trending Searches */}
                     <div className="p-4">
                       <div className="flex items-center gap-2 mb-3">
                         <TrendingUp className="w-4 h-4 text-blue-400" />
-                        <span className="text-sm font-medium text-gray-300">Trending</span>
+                        <span className="text-sm font-medium text-gray-300">
+                          Trending
+                        </span>
                       </div>
                       <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                         {trendingSearches.map((trend, index) => (
@@ -285,7 +318,8 @@ const SearchProducts = () => {
                 </h2>
                 {!isSearching && (
                   <p className="text-gray-400 text-sm">
-                    {searchResults.length} {searchResults.length === 1 ? 'product' : 'products'} found
+                    {searchResults.length}{" "}
+                    {searchResults.length === 1 ? "product" : "products"} found
                   </p>
                 )}
               </div>
@@ -338,9 +372,9 @@ const SearchProducts = () => {
                 key={item._id}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ 
-                  duration: 0.4, 
-                  delay: index * 0.05
+                transition={{
+                  duration: 0.4,
+                  delay: index * 0.05,
                 }}
                 whileHover={{ y: -4 }}
                 className="transform transition-transform"
@@ -369,7 +403,8 @@ const SearchProducts = () => {
                 Ready to explore?
               </h3>
               <p className="text-gray-500">
-                Click the search bar to see trending products and start your search
+                Click the search bar to see trending products and start your
+                search
               </p>
             </div>
           </motion.div>

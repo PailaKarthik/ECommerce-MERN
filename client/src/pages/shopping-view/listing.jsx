@@ -31,7 +31,7 @@ const ShoppingLists = () => {
     (state) => state.shoppingProducts
   );
   const { cartItems } = useSelector((state) => state.shoppingCart);
-  const { user } = useSelector((state) => state.auth);
+  const { user, isAuthenticated } = useSelector((state) => state.auth); // Add isAuthenticated
 
   // Helper to parse filters from URL search params
   const parseFiltersFromSearch = useCallback(() => {
@@ -185,13 +185,43 @@ const ShoppingLists = () => {
 
   const handleAddToCart = (productId, getTotalStock, size) => {
     console.log("size", size);
+    
+    if (size === null) {
+      toast(`Enter the size of the product`, {
+        icon: "❌",
+        duration: 2000,
+        position: "top-center",
+        style: { backgroundColor: "#1f2937", color: "#f9fafb" },
+      });
+      return;
+    }
+
+    // Check if user is authenticated
+    if (!isAuthenticated) {
+      toast("Please login to add items to cart", {
+        icon: "🔒",
+        duration: 2000,
+        position: "top-center",
+        style: { backgroundColor: "#1f2937", color: "#f9fafb" },
+      });
+      // Store the product details for after login (optional)
+      sessionStorage.setItem('pendingCartItem', JSON.stringify({
+        productId,
+        quantity: 1,
+        size
+      }));
+      navigate('/auth/login');
+      return;
+    }
+
+    // Check stock availability for authenticated users
     let items = cartItems.items || [];
     if (items.length) {
       const idx = items.findIndex((item) => item.productId == productId);
       if (idx > -1) {
         const qty = items[idx].quantity;
         if (qty + 1 > getTotalStock) {
-          toast(`only ${qty} quantity can be added for this item`, {
+          toast(`Only ${qty} quantity can be added for this item`, {
             icon: "❌",
             duration: 2000,
             position: "top-center",
@@ -201,15 +231,8 @@ const ShoppingLists = () => {
         }
       }
     }
-    if (size === null) {
-      toast(`enter the size of the product`, {
-        icon: "❌",
-        duration: 2000,
-        position: "top-center",
-        style: { backgroundColor: "#1f2937", color: "#f9fafb" },
-      });
-      return;
-    }
+
+    // If user is authenticated, proceed with existing logic
     dispatch(addToCart({ userId: user?.id, productId, quantity: 1, size: size })).then(
       (response) => {
         if (response.payload?.success) {
