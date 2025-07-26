@@ -32,6 +32,7 @@ import {
   Sparkles,
   Eye,
   ArrowRight,
+  SeparatorHorizontal,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { motion } from "framer-motion";
@@ -54,7 +55,7 @@ import Massey from "../../assets/brands/massey.jpg";
 import Murarka from "../../assets/brands/murarka.jpg";
 import Raymond from "../../assets/brands/raymond.jpg";
 import Sambodhi from "../../assets/brands/sambodhi.webp";
-import Siyarams from "../../assets/brands/siyarams.jpg";
+import Siyarams from "../../assets/brands/siyarams.webp";
 import Solino from "../../assets/brands/solino.jpeg";
 import LinonFeel from "../../assets/brands/Linon-Feel.jpg";
 import Manwill from "../../assets/brands/manwill.webp";
@@ -63,10 +64,14 @@ import UrbanInspire from "../../assets/brands/urban-inspire.jpg";
 
 //category images
 import Accessories from "../../assets/categories/accessories.jpg";
-import Clothing from "../../assets/categories/clothing.webp";
-import Combo from "../../assets/categories/combo.webp";
-import Electronics from "../../assets/categories/electronics.webp";
+import Shirting from "../../assets/categories/shirting.jpeg";
+import Pants from "../../assets/categories/pants.webp";
 import MenClothing from "../../assets/categories/men-clothing.webp";
+import Mattress from "../../assets/categories/mattress.avif";
+
+import { RiShirtLine } from "react-icons/ri";
+import { FaMattressPillow } from "react-icons/fa6";
+import { PiPantsLight } from "react-icons/pi";
 
 const ShoppingHome = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -85,34 +90,27 @@ const ShoppingHome = () => {
   const brandsWithIcon = React.useMemo(
     () => [
       { id: "jockey", label: "Jockey", icon: Fan, image: Jockey },
-      { id: "siyaram", label: "Siyaram", icon: Shirt, image: Siyarams },
       { id: "massey", label: "Massey", icon: ShoppingBag, image: Massey },
       { id: "ramraj", label: "RamRaj", icon: LandPlot, image: RamRaj },
       { id: "solino", label: "Solino", icon: Hexagon, image: Solino },
       { id: "raymond", label: "Raymond", icon: Castle, image: Raymond },
       { id: "sambodi", label: "Sambodi", icon: Star, image: Sambodhi },
       { id: "murarka", label: "Murarka", icon: Sun, image: Murarka },
-      { id: "manwill", label: "Manwill", icon: Tag, image: Manwill },
-      {
-        id: "urbanInspire",
-        label: "Urban Inspire",
-        icon: Building,
-        image: UrbanInspire,
-      },
+      { id: "siyaram", label: "Siyaram", icon: Shirt, image: Siyarams },
     ],
     []
   );
 
   const categoriesWithIcon = React.useMemo(
     () => [
-      { id: "men", label: "Men", icon: Mars, image: MenClothing },
+      { id: "men-shirts", label: "Men Shirts", icon: Mars, image: MenClothing },
       {
-        id: "clothing",
-        label: "Clothing",
-        icon: GalleryVerticalEnd,
-        image: Clothing,
+        id: "men-pants",
+        label: "Pants",
+        icon: PiPantsLight,
+        image: Pants,
       },
-      { id: "combo", label: "Combo", icon: Swords, image: Combo },
+      { id: "men-shirting", label: "Men Shirting", icon: RiShirtLine, image: Shirting },
       {
         id: "accessories",
         label: "Accessories",
@@ -120,25 +118,25 @@ const ShoppingHome = () => {
         image: Accessories,
       },
       {
-        id: "electronics",
-        label: "Electronics",
-        icon: Plug,
-        image: Electronics,
+        id: "mattress",
+        label: "Mattress",
+        icon: FaMattressPillow,
+        image: Mattress,
       },
     ],
     []
   );
 
-  const popularBrands = React.useMemo(
-    () => [
-      { id: "jockey", label: "Jockey", icon: Fan, image: Jockey },
-      { id: "raymond", label: "Raymond", icon: Castle, image: Raymond },
-      { id: "siyaram", label: "Siyaram", icon: Shirt, image: Siyarams },
-      { id: "massey", label: "Massey", icon: ShoppingBag, image: Massey },
-      { id: "ramraj", label: "RamRaj", icon: LandPlot, image: RamRaj },
-    ],
-    []
-  );
+  // const popularBrands = React.useMemo(
+  //   () => [
+  //     { id: "jockey", label: "Jockey", icon: Fan, image: Jockey },
+  //     { id: "raymond", label: "Raymond", icon: Castle, image: Raymond },
+  //     { id: "siyaram", label: "Siyaram", icon: Shirt, image: Siyarams },
+  //     { id: "massey", label: "Massey", icon: ShoppingBag, image: Massey },
+  //     { id: "ramraj", label: "RamRaj", icon: LandPlot, image: RamRaj },
+  //   ],
+  //   []
+  // );
 
   const services = React.useMemo(
     () => [
@@ -198,8 +196,13 @@ const ShoppingHome = () => {
   }, [dispatch]);
 
   // Memoize product derivations to prevent recalculation
-  const popularProducts = React.useMemo(
-    () => productList.slice(0, 6),
+  const trackpantsProducts = React.useMemo(
+    () => productList.filter((product) => product.category === "men-trackpants").slice(0, 8),
+    [productList]
+  );
+
+  const tshirtsProducts = React.useMemo(
+    () => productList.filter((product) => product.category === "men-tshirts").slice(0, 8),
     [productList]
   );
 
@@ -212,7 +215,7 @@ const ShoppingHome = () => {
           }
           return b._id.localeCompare(a._id);
         })
-        .slice(0, 6),
+        .slice(0, 8),
     [productList]
   );
 
@@ -408,20 +411,22 @@ const ShoppingHome = () => {
       initial={{ opacity: 0.5, y: -100 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 1 }}
-      className="flex flex-col min-h-screen bg-gray-900"
+      className="p-3 md:p-0 flex flex-col min-h-screen bg-gray-900"
     >
       {/* Hero Banner */}
-      <div className="relative w-full h-48 md:h-80 lg:h-[400px] overflow-hidden mt-4 md:mt-8 lg:mt-16 rounded-xl">
+      <div className="relative w-full h-48 md:h-80 lg:h-[600px] overflow-hidden ">
         {slides && slides.length > 0
           ? slides.map((slide, index) => (
-              <img
-                src={slide?.image}
-                key={index}
-                className={`absolute w-full h-full object-cover transition-opacity duration-1000 rounded-xl ${
-                  index === currentSlide ? "opacity-100" : "opacity-0"
-                }`}
-                alt={`Banner ${index + 1}`}
-              />
+              <a href="listing">
+                <img
+                  src={slide?.image}
+                  key={index}
+                  className={`absolute w-full h-full object-cover transition-opacity duration-1000 ${
+                    index === currentSlide ? "opacity-100" : "opacity-0"
+                  }`}
+                  alt={`Banner ${index + 1}`}
+                />
+              </a>
             ))
           : null}
 
@@ -456,46 +461,105 @@ const ShoppingHome = () => {
         )}
       </div>
 
-      {/* Brands Section */}
-      <section className="py-12 mx-4 md:mx-8 lg:mx-16">
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="text-center mb-12"
-        >
-          <h2 className="flex items-center justify-center gap-3 text-3xl md:text-4xl font-bold text-gray-200 mb-4">
-            <SplitIcon className="text-orange-400" />
-            Shop by <span className="text-orange-400">Brand</span>
+      {/* Latest Products */}
+      <section className="lg:px-40 py-6 md:py-12 md:mx-8 lg:mx-16">
+        <div className="text-center mb-8">
+          <h2 className="text-2xl md:text-3xl font-bold text-gray-200 mb-2">
+            Latest Products
           </h2>
-          <p className="text-gray-400 text-lg max-w-2xl mx-auto">
-            Discover premium collections from your favorite brands
-          </p>
-        </motion.div>
+        </div>
 
-        {/* Desktop Grid */}
-        <div className="hidden md:grid grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-          {brandsWithIcon.map((brand, index) => (
-            <BrandCard key={brand.id} brand={brand} index={index} />
+        <div className="hidden md:grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 gap-4 justify-items-center">
+          {latestProducts.map((p) => (
+            <ShoppingProductTile
+              key={p._id}
+              product={p}
+              handleGetProductDetails={handleGetProductDetails}
+              handleAddToCart={handleAddToCart}
+            />
           ))}
         </div>
 
-        {/* Mobile Horizontal Scroll */}
-        <div className="md:hidden">
-          <div className="overflow-x-auto scrollbar-hide">
-            <div className="flex gap-4 pb-4" style={{ width: "max-content" }}>
-              {brandsWithIcon.map((brand, index) => (
-                <div key={brand.id} className="w-48 flex-shrink-0">
-                  <BrandCard brand={brand} index={index} />
-                </div>
-              ))}
-            </div>
+        <div className="md:hidden overflow-x-auto scrollbar-hide">
+          <div
+            className="flex gap-2 pb-2 justify-center"
+            style={{ width: "max-content" }}
+          >
+            {latestProducts.map((p) => (
+              <div key={p._id} className="flex-shrink-0 min-w-[36vw]">
+                <ShoppingProductTile
+                  product={p}
+                  handleGetProductDetails={handleGetProductDetails}
+                  handleAddToCart={handleAddToCart}
+                  isMobile
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Trackpants Products */}
+      <section className="lg:px-40 py-6 md:py-12 md:mx-8 lg:mx-16">
+        <div className="text-center mb-8">
+          <h2 className="text-2xl md:text-3xl font-bold text-gray-200 mb-2">
+            Men's Trackpants
+          </h2>
+        </div>
+
+        <div className="hidden md:grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 gap-4">
+          {trackpantsProducts.map((p) => (
+            <ShoppingProductTile
+              key={p._id}
+              product={p}
+              handleGetProductDetails={handleGetProductDetails}
+              handleAddToCart={handleAddToCart}
+            />
+          ))}
+        </div>
+
+        <div className="md:hidden overflow-x-auto scrollbar-hide">
+          <div className="flex gap-2 pb-2" style={{ width: "max-content" }}>
+            {trackpantsProducts.map((p) => (
+              <div key={p._id} className="flex-shrink-0 min-w-[36vw]">
+                <ShoppingProductTile
+                  product={p}
+                  handleGetProductDetails={handleGetProductDetails}
+                  handleAddToCart={handleAddToCart}
+                  isMobile
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* T-shirts Products - Mobile Only */}
+      <section className="md:hidden py-6">
+        <div className="text-center mb-8">
+          <h2 className="text-2xl font-bold text-gray-200 mb-2">
+            Men's T-shirts
+          </h2>
+        </div>
+
+        <div className="overflow-x-auto scrollbar-hide">
+          <div className="flex gap-2 pb-2" style={{ width: "max-content" }}>
+            {tshirtsProducts.map((p) => (
+              <div key={p._id} className="flex-shrink-0 min-w-[36vw]">
+                <ShoppingProductTile
+                  product={p}
+                  handleGetProductDetails={handleGetProductDetails}
+                  handleAddToCart={handleAddToCart}
+                  isMobile
+                />
+              </div>
+            ))}
           </div>
         </div>
       </section>
 
       {/* Categories Section */}
-      <section className="py-12 mx-4 md:mx-8 lg:mx-16">
+      <section className="pt-12 mx-4 md:mx-8 lg:mx-16">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
@@ -532,8 +596,8 @@ const ShoppingHome = () => {
         </div>
       </section>
 
-      {/* Popular Brands Section */}
-      <section className="py-12 mx-4 md:mx-8 lg:mx-16">
+      {/* Brands Section */}
+      <section className="lg:px-40 pt-12 mx-4 md:mx-8 lg:mx-16">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
@@ -541,17 +605,17 @@ const ShoppingHome = () => {
           className="text-center mb-12"
         >
           <h2 className="flex items-center justify-center gap-3 text-3xl md:text-4xl font-bold text-gray-200 mb-4">
-            <Award className="text-orange-400" />
-            Popular <span className="text-orange-400">Brands</span>
+            <SplitIcon className="text-orange-400" />
+            Shop by <span className="text-orange-400">Brand</span>
           </h2>
           <p className="text-gray-400 text-lg max-w-2xl mx-auto">
-            Most loved brands by our customers
+            Discover premium collections from your favorite brands
           </p>
         </motion.div>
 
         {/* Desktop Grid */}
-        <div className="hidden md:grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
-          {popularBrands.map((brand, index) => (
+        <div className="hidden md:grid grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+          {brandsWithIcon.map((brand, index) => (
             <BrandCard key={brand.id} brand={brand} index={index} />
           ))}
         </div>
@@ -560,7 +624,7 @@ const ShoppingHome = () => {
         <div className="md:hidden">
           <div className="overflow-x-auto scrollbar-hide">
             <div className="flex gap-4 pb-4" style={{ width: "max-content" }}>
-              {popularBrands.map((brand, index) => (
+              {brandsWithIcon.map((brand, index) => (
                 <div key={brand.id} className="w-48 flex-shrink-0">
                   <BrandCard brand={brand} index={index} />
                 </div>
@@ -571,7 +635,7 @@ const ShoppingHome = () => {
       </section>
 
       {/* Services Section */}
-      <section className="py-8 mx-4 md:mx-8 lg:mx-16 bg-gray-800 rounded-xl">
+      <section className="py-8 mx-4 md:mx-8 lg:mx-16 ">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {services.map((service, index) => (
             <div key={index} className="text-center">
@@ -584,72 +648,6 @@ const ShoppingHome = () => {
               </p>
             </div>
           ))}
-        </div>
-      </section>
-
-      {/* Latest Products */}
-      <section className="py-6 p-2 mt-2 md:mt-4 md:py-12 mx-4 md:mx-8 lg:mx-16 bg-gray-800 rounded-xl">
-        <h2 className="flex items-center gap-2 text-2xl md:text-3xl font-bold text-orange-100 mb-6">
-          <Sparkles /> Latest Products
-        </h2>
-
-        <div className="hidden md:grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {latestProducts.map((p) => (
-            <ShoppingProductTile
-              key={p._id}
-              product={p}
-              handleGetProductDetails={handleGetProductDetails}
-              handleAddToCart={handleAddToCart}
-            />
-          ))}
-        </div>
-
-        <div className="md:hidden overflow-x-auto scrollbar-hide">
-          <div className="flex gap-4 pb-2" style={{ width: "max-content" }}>
-            {latestProducts.map((p) => (
-              <div key={p._id} className="flex-shrink-0 min-w-[50vw] px-2">
-                <ShoppingProductTile
-                  product={p}
-                  handleGetProductDetails={handleGetProductDetails}
-                  handleAddToCart={handleAddToCart}
-                  isMobile
-                />
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Popular Products */}
-      <section className="py-6 md:py-12 mx-4 md:mx-8 lg:mx-16">
-        <h2 className="flex items-center gap-2 text-2xl md:text-3xl font-bold text-gray-200 mb-6">
-          <TrendingUp /> Popular Products
-        </h2>
-
-        <div className="hidden md:grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {popularProducts.map((p) => (
-            <ShoppingProductTile
-              key={p._id}
-              product={p}
-              handleGetProductDetails={handleGetProductDetails}
-              handleAddToCart={handleAddToCart}
-            />
-          ))}
-        </div>
-
-        <div className="md:hidden overflow-x-auto scrollbar-hide">
-          <div className="flex gap-4 pb-2" style={{ width: "max-content" }}>
-            {popularProducts.map((p) => (
-              <div key={p._id} className="flex-shrink-0 min-w-[50vw] px-2">
-                <ShoppingProductTile
-                  product={p}
-                  handleGetProductDetails={handleGetProductDetails}
-                  handleAddToCart={handleAddToCart}
-                  isMobile
-                />
-              </div>
-            ))}
-          </div>
         </div>
       </section>
 

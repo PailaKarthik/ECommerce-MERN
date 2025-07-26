@@ -36,7 +36,7 @@ const CheckAuth = ({ isAuthenticated, user, children }) => {
       console.log("Redirecting admin to dashboard from root");
       return <Navigate to="/admin/dashboard" replace />;
     } else {
-      return <Navigate to="/shop/listing" replace />;
+      return <Navigate to="/shop/home" replace />;
     }
   }
 
@@ -50,7 +50,7 @@ const CheckAuth = ({ isAuthenticated, user, children }) => {
       console.log("Redirecting admin to dashboard from auth page");
       return <Navigate to="/admin/dashboard" replace />;
     } else {
-      return <Navigate to="/shop/listing" replace />;
+      return <Navigate to="/shop/home" replace />;
     }
   }
 

@@ -118,6 +118,12 @@ const ShoppingFooter = () => {
             <h3 className="text-white text-xl font-semibold mb-6">More Info</h3>
             
             <div className="space-y-3">
+              <a href="/shop/about/about-us" className="block text-gray-300 hover:text-orange-400 transition-colors duration-200 hover:translate-x-1 transform">
+                → About Us
+              </a>
+              <a href="/shop/about/contact-us" className="block text-gray-300 hover:text-orange-400 transition-colors duration-200 hover:translate-x-1 transform">
+                → Contact Us
+              </a>
               <a 
                 href="/shop/about/terms-of-service" 
                 className="block text-gray-300 hover:text-orange-400 transition-colors duration-200 hover:translate-x-1 transform"
@@ -183,6 +189,12 @@ const ShoppingFooter = () => {
               © 2025 Urban Trendz. All rights reserved.
             </p>
             <div className="flex gap-6 text-sm">
+              <a href="/shop/about/about-us" className="text-gray-400 hover:text-orange-400 transition-colors">
+                About Us
+              </a>
+              <a href="/shop/about/contact-us" className="text-gray-400 hover:text-orange-400 transition-colors">
+                Contact Us
+              </a>
               <a href="/shop/about/terms-of-service" className="text-gray-400 hover:text-orange-400 transition-colors">
                 Terms
               </a>

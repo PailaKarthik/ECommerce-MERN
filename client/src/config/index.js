@@ -65,11 +65,15 @@ export const addProductFormElements = [
     type: "select",
     placeholder: "Select Product Category",
     options: [
-      { id: "clothing", label: "Clothing" },
-      { id: "combo", label: "Combo" },
-      { id: "men", label: "Men" },
+      { id: "men-shirts", label: "Shirts" },
+      { id: "men-pants", label: "Pants" },
+      { id: "men-tshirts", label: "Tshirts" },
+      { id: "men-shirting", label: "Shirting" },
+      { id: "men-suiting", label: "Suiting" },
+      { id: "men-jeans", label: "Jeans" },
+      { id: "men-trackpants", label: "Track Pants" },
       { id: "accessories", label: "Accessories" },
-      { id: "electronics", label: "Electronics" },
+      { id: "mattress", label: "Mattress" },
     ],
     componentType: "select",
   },
@@ -135,7 +139,7 @@ export const addProductFormElements = [
 export const shoppingViewHeaderMenuItems = [
   {
     id: "search",
-    label: "Ϙ Search",
+    label: "🔎 Search",
     path: "/shop/search",
   },
   {
@@ -149,19 +153,17 @@ export const shoppingViewHeaderMenuItems = [
     path: "/shop/listing",
   },
   {
-    id: "clothing",
-    label: "Clothing",
-    path: "/shop/listing",
-  },
-  {
-    id: "combo",
-    label: "Combo",
-    path: "/shop/listing",
-  },
-  {
     id: "men",
     label: "Men",
-    path: "/shop/listing",
+    subItems : [
+      { id: "men-shirts", label: "Shirts", path: "/shop/listing" },
+      { id: "men-pants", label: "Pants", path: "/shop/listing" },
+      { id: "men-tshirts", label: "Tshirts", path: "/shop/listing" },
+      { id: "men-shirting", label: "Shirting", path: "/shop/listing" },
+      { id: "men-suiting", label: "Suiting", path: "/shop/listing" },
+      { id: "men-jeans", label: "Jeans", path: "/shop/listing" },
+      { id: "men-trackpants", label: "Track Pants", path: "/shop/listing" },
+    ]
   },
   {
     id: "accessories",
@@ -169,19 +171,34 @@ export const shoppingViewHeaderMenuItems = [
     path: "/shop/listing",
   },
   {
-    id: "electronics",
-    label: "Electronics",
+    id: "mattress",
+    label: "Mattress",
     path: "/shop/listing",
   },
+  {
+    id : "others",
+    label: "Others",
+    subItems: [
+      {id : "shopping-policy", label : "Shopping Policy", path: "/shop/about/shipping-policy" },
+      { id: "terms-and-conditions", label: "Terms and Conditions", path: "/shop/about/terms-of-service" },
+      { id: "privacy-policy", label: "Privacy Policy", path: "/shop/about/privacy-policy" },
+      { id: "about-us", label: "About Us", path: "/shop/about/about-us" },
+      { id: "contact-us", label: "Contact Us", path: "/shop/about/contact-us" },
+    ]
+  }
 ];
 
 export const filterOptions = {
   category: [
-    { id: "clothing", label: "Clothing" },
-    { id: "combo", label: "Combo" },
-    { id: "men", label: "Men" },
-    { id: "accessories", label: "Accessories" },
-    { id: "electronics", label: "Electronics" },
+      { id: "men-shirts", label: "Shirts" },
+      { id: "men-pants", label: "Pants" },
+      { id: "men-tshirts", label: "Tshirts" },
+      { id: "men-shirting", label: "Shirting" },
+      { id: "men-suiting", label: "Suiting" },
+      { id: "men-jeans", label: "Jeans" },
+      { id: "men-trackpants", label: "Track Pants" },
+      { id: "accessories", label: "Accessories" },
+      { id: "mattress", label: "Mattress" },
   ],
   brand: [
     { id: "massey", label: "Massey" },

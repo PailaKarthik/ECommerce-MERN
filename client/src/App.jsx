@@ -27,6 +27,8 @@ import ScrollToTop from "./components/common/ScrollToTop";
 import TermsOfService from "./pages/about/terms-of-service";
 import PrivacyPolicy from "./pages/about/privacy-policy";
 import ShippingPolicy from "./pages/about/shopping-policy";
+import AboutUs from "./pages/about/about-us";
+import ContactUs from "./pages/about/contact-us";
 
 const App = () => {
   const { isAuthenticated, user, isLoading } = useSelector(
@@ -45,7 +47,7 @@ const App = () => {
 
   return (
     <div className="flex flex-col overflow-hidden bg-white">
-        <ScrollToTop/>
+      <ScrollToTop />
       <Routes>
         {/* Root path */}
         <Route
@@ -103,12 +105,11 @@ const App = () => {
           <Route path="search" element={<SearchProducts />} />
 
           {/* About/Info pages */}
-          <Route
-            path="about/terms-of-service"
-            element={<TermsOfService />}
-          />
+          <Route path="about/terms-of-service" element={<TermsOfService />} />
           <Route path="about/privacy-policy" element={<PrivacyPolicy />} />
           <Route path="about/shipping-policy" element={<ShippingPolicy />} />
+          <Route path="about/about-us" element={<AboutUs />} />
+          <Route path="about/contact-us" element={<ContactUs />} />
         </Route>
 
         {/* Unauthorized page */}

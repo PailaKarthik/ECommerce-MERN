@@ -1,22 +1,13 @@
 import React, { useState } from "react";
-import { Card, CardContent, CardFooter } from "../ui/card";
-import { Badge } from "../ui/badge";
-import { Button } from "../ui/button";
-import { ShoppingCart, Tag, ImageIcon } from "lucide-react";
+import { ImageIcon } from "lucide-react";
 
 const ShoppingProductTile = ({
   product,
   handleGetProductDetails,
-  handleAddToCart,
+  // handleAddToCart,
   isMobile = false,
 }) => {
   const [imageError, setImageError] = useState(false);
-
-  // default size if none provided
-  const defaultSize =
-    product?.pantSizes === "-" && product?.tshirtSizes === "-"
-      ? "-"
-      : null;
 
   // pick first valid image URL
   const getProductImage = () => {
@@ -37,39 +28,13 @@ const ShoppingProductTile = ({
 
   // placeholder when no image
   const ImagePlaceholder = ({ className }) => (
-    <div className={`bg-gray-700 flex items-center justify-center ${className}`}>
-      <div className="text-center text-gray-400">
+    <div className={`bg-gray-800 flex items-center justify-center ${className}`}>
+      <div className="text-center text-gray-500">
         <ImageIcon size={isMobile ? 24 : 48} className="mx-auto mb-1" />
         <p className="text-xs">No image</p>
       </div>
     </div>
   );
-
-  // stock badge logic
-  const getStockBadge = () => {
-    if (product.quantity === 0) {
-      return (
-        <Badge className="absolute top-2 left-2 bg-red-500 text-white font-bold px-2 py-1 text-xs flex items-center gap-1 z-10">
-          Out of Stock
-          <Tag size={8} />
-        </Badge>
-      );
-    }
-    if (product.quantity < 10) {
-      return (
-        <Badge className="absolute top-2 left-2 bg-amber-500 text-white font-bold px-2 py-1 text-xs flex items-center gap-1 z-10">
-          {product.quantity} Left
-          <Tag size={8} />
-        </Badge>
-      );
-    }
-    return (
-      <Badge className="absolute top-2 left-2 bg-green-500 text-white font-bold px-2 py-1 text-xs flex items-center gap-1 z-10">
-        In Stock
-        <Tag size={8} />
-      </Badge>
-    );
-  };
 
   // discount percentage
   const discountPercentage =
@@ -79,119 +44,40 @@ const ShoppingProductTile = ({
         )
       : 0;
 
+  // Check if product has sizes
+  const hasSizes = () => {
+    return (
+      (product?.pantSizes && product.pantSizes !== "-") ||
+      (product?.tshirtSizes && product.tshirtSizes !== "-")
+    );
+  };
+
+  // Get available sizes
+  const getAvailableSizes = () => {
+    const sizes = [];
+    if (product?.pantSizes && product.pantSizes !== "-") {
+      sizes.push(...product.pantSizes.split(",").map((size) => size.trim()));
+    }
+    if (product?.tshirtSizes && product.tshirtSizes !== "-") {
+      sizes.push(...product.tshirtSizes.split(",").map((size) => size.trim()));
+    }
+    return [...new Set(sizes)]; // Remove duplicates
+  };
+
   // MOBILE VARIANT
   if (isMobile) {
     return (
-      <Card className="w-full bg-gray-800 text-gray-200 border border-gray-700 shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden flex-shrink-0 h-[340px] flex flex-col">
-        <div
-          onClick={() => handleGetProductDetails(product._id)}
-          className="cursor-pointer hover:bg-gray-750 transition-colors flex-1 flex flex-col"
-        >
-          {/* IMAGE */}
-          <div className="relative h-40 overflow-hidden flex-shrink-0">
-            {hasValidImage ? (
-              <img
-                src={productImage}
-                alt={product.title || "Product"}
-                className="w-full h-full object-cover object-top"
-                onError={handleImageError}
-                onLoad={handleImageLoad}
-              />
-            ) : (
-              <ImagePlaceholder className="w-full h-full" />
-            )}
-
-            {getStockBadge()}
-
-            {discountPercentage > 0 && (
-              <Badge className="absolute top-10 left-2 bg-red-500 text-white font-bold px-1.5 py-0.5 text-xs z-10">
-                -{discountPercentage}%
-              </Badge>
-            )}
-
-            {Array.isArray(product.images) && product.images.length > 1 && (
-              <div className="absolute bottom-1 right-1 bg-black bg-opacity-60 text-white text-xs px-1.5 py-0.5 rounded z-10">
-                +{product.images.length - 1}
-              </div>
-            )}
-          </div>
-
-          {/* DETAILS */}
-          <div className="p-3 flex-1 flex flex-col justify-between">
-            <div>
-              <h3 className="text-sm font-semibold mb-1 capitalize overflow-hidden line-clamp-2" style={{ 
-                display: '-webkit-box',
-                WebkitLineClamp: 2,
-                WebkitBoxOrient: 'vertical',
-                lineHeight: '1.2',
-                maxHeight: '2.4em'
-              }}>
-                {product.title || "Untitled Product"}
-              </h3>
-              <div className="flex items-center gap-1 text-gray-400 mb-2 text-xs">
-                <span className="capitalize bg-gray-700 px-1.5 py-0.5 rounded text-xs">
-                  {product.category || "N/A"}
-                </span>
-                <span>•</span>
-                <span className="capitalize font-medium text-xs truncate">
-                  {product.brand || "N/A"}
-                </span>
-              </div>
-              <div className="flex items-center gap-1.5 mb-2">
-                {product.sellPrice > 0 && (
-                  <span className="text-base font-bold text-green-400">
-                    ₹{product.sellPrice}
-                  </span>
-                )}
-                <span
-                  className={`text-sm ${
-                    product.sellPrice > 0
-                      ? "line-through text-gray-500"
-                      : "text-white font-semibold"
-                  }`}
-                >
-                  ₹{product.price}
-                </span>
-              </div>
-            </div>
-
-            {product.quantity === 0 ? (
-              <Button
-                disabled
-                className="w-full opacity-60 cursor-not-allowed bg-gray-700 text-gray-400 font-medium py-2 rounded text-xs flex items-center justify-center gap-1.5"
-              >
-                <ShoppingCart size={14} />
-                Out of Stock
-              </Button>
-            ) : (
-              <Button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleAddToCart(product._id, product.quantity, defaultSize);
-                }}
-                className="w-full bg-gray-700 hover:bg-gray-600 text-white font-medium py-2 rounded text-xs flex items-center justify-center gap-1.5 shadow-md hover:shadow-lg"
-              >
-                <ShoppingCart size={14} />
-                Add to Cart
-              </Button>
-            )}
-          </div>
-        </div>
-      </Card>
-    );
-  }
-
-  // DESKTOP VARIANT
-  return (
-    <Card className="py-0 w-full max-w-sm mx-auto bg-gray-800 text-gray-200 border border-gray-700 shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden group cursor-pointer transform hover:-translate-y-1">
-      <div onClick={() => handleGetProductDetails(product._id)}>
+      <div
+        className="w-full cursor-pointer hover:opacity-90 transition-opacity duration-200"
+        onClick={() => handleGetProductDetails(product._id)}
+      >
         {/* IMAGE */}
-        <div className="relative md:h-[300px] overflow-hidden">
+        <div className="relative w-40 h-50 overflow-hidden bg-gray-800">
           {hasValidImage ? (
             <img
               src={productImage}
               alt={product.title || "Product"}
-              className="w-full h-[150px] md:h-full object-cover object-top group-hover:scale-110 transition-transform duration-300"
+              className="w-full h-full object-cover object-center"
               onError={handleImageError}
               onLoad={handleImageLoad}
             />
@@ -199,92 +85,135 @@ const ShoppingProductTile = ({
             <ImagePlaceholder className="w-full h-full" />
           )}
 
-          <Badge
-            className={`absolute top-2 left-2 font-bold px-2 py-1 text-xs flex items-center gap-1 z-10 ${
-              product.quantity === 0
-                ? "bg-red-500 text-white"
-                : product.quantity < 10
-                ? "bg-amber-500 text-white"
-                : "bg-green-500 text-white"
-            }`}
-          >
-            {product.quantity === 0
-              ? "Out of Stock"
-              : product.quantity < 10
-              ? `${product.quantity} Left`
-              : "In Stock"}
-            <Tag size={12} />
-          </Badge>
-
+          {/* Discount Badge */}
           {discountPercentage > 0 && (
-            <Badge className="absolute top-2 right-2 bg-red-500 text-white font-bold px-2 py-1 text-xs z-10">
+            <div className="absolute top-2 right-2 bg-red-600 text-white text-xs px-2 py-1">
               -{discountPercentage}%
-            </Badge>
-          )}
-
-          {Array.isArray(product.images) && product.images.length > 1 && (
-            <div className="absolute bottom-2 right-2 bg-black bg-opacity-60 text-white text-xs px-2 py-1 rounded z-10">
-              +{product.images.length - 1} more
             </div>
           )}
         </div>
 
         {/* DETAILS */}
-        <CardContent className="p-1 md:p-4">
-          <h2 className="text-md font-bold mb-2 capitalize line-clamp-2 group-hover:text-blue-400 transition-colors">
+        <div className="py-3">
+          {/* Title */}
+          <h3 className="text-sm font-normal mb-2 text-gray-200 line-clamp-2">
             {product.title || "Untitled Product"}
-          </h2>
-          <div className="flex items-center gap-1 text-gray-400 mb-3 text-sm">
-            <span className="capitalize bg-gray-700 px-2 py-1 rounded text-xs">
-              {product.category || "N/A"}
-            </span>
-            <span>•</span>
-            <span className="capitalize font-medium">
-              {product.brand || "N/A"}
-            </span>
-          </div>
+          </h3>
+
+          {/* Price */}
           <div className="flex items-center gap-2 mb-2">
-            {product.sellPrice > 0 && (
-              <span className="text-sm font-bold text-green-400">
-                ₹{product.sellPrice}.00
+            {product.sellPrice > 0 ? (
+              <>
+                <span className="text-lg font-bold text-white">
+                  Rs. {product.sellPrice}.00
+                </span>
+                <span className="text-sm line-through text-gray-500">
+                  Rs. {product.price}.00
+                </span>
+              </>
+            ) : (
+              <span className="text-lg font-bold text-white">
+                Rs. {product.price}.00
               </span>
             )}
-            <span
-              className={`text-sm ${
-                product.sellPrice > 0
-                  ? "line-through text-gray-500"
-                  : "text-white font-semibold"
-              }`}
-            >
-              ₹{product.price}.00
-            </span>
           </div>
-        </CardContent>
+
+          {/* Sizes */}
+          {hasSizes() && (
+            <div className="flex flex-wrap gap-1">
+              {getAvailableSizes().slice(0, 4).map((size, index) => (
+                <span
+                  key={index}
+                  className="text-xs bg-gray-700 text-gray-300 px-2 py-1"
+                >
+                  {size}
+                </span>
+              ))}
+              {getAvailableSizes().length > 4 && (
+                <span className="text-xs text-gray-400">
+                  +{getAvailableSizes().length - 4}
+                </span>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // DESKTOP VARIANT
+  return (
+    <div
+      className="w-full max-w-sm mx-auto cursor-pointer hover:opacity-90 transition-opacity duration-200 group"
+      onClick={() => handleGetProductDetails(product._id)}
+    >
+      {/* IMAGE */}
+      <div className="relative h-[280px] overflow-hidden bg-gray-800">
+        {hasValidImage ? (
+          <img
+            src={productImage}
+            alt={product.title || "Product"}
+            className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-300"
+            onError={handleImageError}
+            onLoad={handleImageLoad}
+          />
+        ) : (
+          <ImagePlaceholder className="w-full h-full" />
+        )}
+
+        {/* Discount Badge */}
+        {discountPercentage > 0 && (
+          <div className="absolute top-2 right-2 bg-red-600 text-white text-xs px-2 py-1">
+            -{discountPercentage}%
+          </div>
+        )}
       </div>
 
-      <CardFooter className="p-4 pt-0">
-        {product.quantity === 0 ? (
-          <Button
-            disabled
-            className="w-full opacity-60 cursor-not-allowed bg-gray-700 text-gray-400 font-semibold py-3 rounded-md flex items-center justify-center gap-2"
-          >
-            <ShoppingCart size={18} />
-            Out of Stock
-          </Button>
-        ) : (
-          <Button
-            onClick={(e) => {
-              e.stopPropagation();
-              handleAddToCart(product._id, product.quantity, defaultSize);
-            }}
-            className="w-full bg-gray-700 hover:bg-gray-600 text-white font-semibold py-3 rounded-md flex items-center justify-center gap-2 shadow-md hover:shadow-lg transform hover:scale-105"
-          >
-            <ShoppingCart size={18} />
-            Add to Cart
-          </Button>
+      {/* DETAILS */}
+      <div className="py-4">
+        {/* Title */}
+        <h2 className="text-base font-normal mb-3 text-gray-200 line-clamp-2 group-hover:text-orange-400 transition-colors">
+          {product.title || "Untitled Product"}
+        </h2>
+
+        {/* Price */}
+        <div className="flex items-center gap-2 mb-3">
+          {product.sellPrice > 0 ? (
+            <>
+              <span className="text-xl font-bold text-white">
+                Rs. {product.sellPrice}.00
+              </span>
+              <span className="text-sm line-through text-gray-500">
+                Rs. {product.price}.00
+              </span>
+            </>
+          ) : (
+            <span className="text-xl font-bold text-white">
+              Rs. {product.price}.00
+            </span>
+          )}
+        </div>
+
+        {/* Sizes */}
+        {hasSizes() && (
+          <div className="flex flex-wrap gap-1">
+            {getAvailableSizes().slice(0, 5).map((size, index) => (
+              <span
+                key={index}
+                className="text-xs bg-gray-700 text-gray-300 px-2 py-1 border border-gray-600"
+              >
+                {size}
+              </span>
+            ))}
+            {getAvailableSizes().length > 5 && (
+              <span className="text-xs text-gray-400">
+                +{getAvailableSizes().length - 5} more
+              </span>
+            )}
+          </div>
         )}
-      </CardFooter>
-    </Card>
+      </div>
+    </div>
   );
 };
 
