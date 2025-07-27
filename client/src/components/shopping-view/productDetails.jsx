@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogTitle } from "../ui/dialog";
 import { Button } from "../ui/button";
-import { ShoppingCart, MessageSquareMore, ChevronLeft, ChevronRight, ImageIcon, Package } from "lucide-react";
+import { ShoppingCart, MessageSquareMore, ChevronLeft, ChevronRight, ImageIcon, Package, Ruler } from "lucide-react";
 import { Separator } from "../ui/separator";
 import { Avatar, AvatarFallback } from "../ui/avatar";
 import { Input } from "../ui/input";
@@ -19,11 +19,25 @@ const ProductDetailsDialog = ({ open, setOpen, productDetails, handleAddToCart }
   const [rating, setRating] = useState(0);
   const [slideIdx, setSlideIdx] = useState(0);
   const [imageError, setImageError] = useState({});
+  const [meters, setMeters] = useState(1); // New state for meters
   
   const dispatch = useDispatch();
   const { cartItems } = useSelector((state) => state.shoppingCart);
   const { user } = useSelector((state) => state.auth);
   const { productReviews } = useSelector((state) => state.shoppingReview);
+  
+  // Check if current product is shirting category
+  const isShirtingCategory = productDetails?.category === 'men-shirting';
+  
+  // Calculate total cost based on meters for shirting
+  const calculateTotalCost = () => {
+    if (!isShirtingCategory) return null;
+    
+    const basePrice = productDetails?.sellPrice > 0 ? productDetails.sellPrice : productDetails?.price || 0;
+    return basePrice * meters;
+  };
+  
+  const totalCost = Math.floor(calculateTotalCost() || 0);
   
   // Safe default array with proper validation
   const images = productDetails?.images && Array.isArray(productDetails.images) 
@@ -47,6 +61,9 @@ const ProductDetailsDialog = ({ open, setOpen, productDetails, handleAddToCart }
 
   // Get available sizes with quantities
   const availableSizes = React.useMemo(() => {
+    // For shirting category, sizes might not be applicable
+    if (isShirtingCategory) return [];
+    
     // Handle both new format and backward compatibility
     let sizesString = "";
     
@@ -67,7 +84,7 @@ const ProductDetailsDialog = ({ open, setOpen, productDetails, handleAddToCart }
     }
     
     return parseSizes(sizesString);
-  }, [productDetails]);
+  }, [productDetails, isShirtingCategory]);
 
   // Check if sizes are available
   const hasSizes = availableSizes.length > 0;
@@ -77,6 +94,7 @@ const ProductDetailsDialog = ({ open, setOpen, productDetails, handleAddToCart }
       setSlideIdx(0);
       setImageError({});
       setSize(hasSizes ? null : "-");
+      setMeters(1); // Reset meters to 1 when product changes
       dispatch(getProductReviews(productDetails._id));
     }
   }, [productDetails, dispatch, hasSizes]);
@@ -110,6 +128,7 @@ const ProductDetailsDialog = ({ open, setOpen, productDetails, handleAddToCart }
     setRating(0);
     setReviewMsg("");
     setSize(null);
+    setMeters(1); // Reset meters when closing
     setImageError({});
   };
 
@@ -152,6 +171,16 @@ const ProductDetailsDialog = ({ open, setOpen, productDetails, handleAddToCart }
     if (!size || size === "-") return 0;
     const selectedSizeObj = availableSizes.find(s => s.size === size);
     return selectedSizeObj ? selectedSizeObj.quantity : 0;
+  };
+
+  // Handle meters input change
+  const handleMetersChange = (e) => {
+    const value = parseFloat(e.target.value);
+    if (value > 0 && value <= 100) { // Set reasonable limits
+      setMeters(value);
+    } else if (e.target.value === "") {
+      setMeters(1);
+    }
   };
 
   // Placeholder component for when no images are available
@@ -252,6 +281,7 @@ const ProductDetailsDialog = ({ open, setOpen, productDetails, handleAddToCart }
               {productDetails?.sellPrice > 0 && (
                 <span className="text-green-400 font-bold text-lg md:text-xl">
                   ₹{productDetails.sellPrice}.00
+                  {isShirtingCategory && <span className="text-sm text-gray-400 ml-1">per meter</span>}
                 </span>
               )}
               <span
@@ -260,8 +290,22 @@ const ProductDetailsDialog = ({ open, setOpen, productDetails, handleAddToCart }
                 } text-base md:text-lg`}
               >
                 ₹{productDetails?.price || 0}.00
+                {isShirtingCategory && <span className="text-sm text-gray-400 ml-1">per meter</span>}
               </span>
             </div>
+
+            {/* Show total cost for shirting */}
+            {isShirtingCategory && totalCost && (
+              <div className="bg-orange-500/10 border border-orange-500/30 rounded-lg p-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-orange-300 font-medium">Total Cost:</span>
+                  <span className="text-orange-400 font-bold text-xl">₹{totalCost.toFixed(2)}</span>
+                </div>
+                <p className="text-orange-200/70 text-xs mt-1">
+                  {meters} meter{meters !== 1 ? 's' : ''} × ₹{productDetails?.sellPrice > 0 ? productDetails.sellPrice : productDetails?.price || 0}
+                </p>
+              </div>
+            )}
 
             {/* Description moved below price with highlighted background */}
             <div className="bg-gradient-to-r from-blue-900/30 to-purple-900/30 p-3 md:p-4 rounded-lg border border-blue-800/30">
@@ -281,50 +325,96 @@ const ProductDetailsDialog = ({ open, setOpen, productDetails, handleAddToCart }
               </span>
             </div>
 
-            {/* Sizes Section */}
-            <div className="space-y-3">
-              {hasSizes ? (
-                <div className="space-y-2">
-                  <Label className="text-white font-semibold text-sm md:text-base">Available Sizes:</Label>
-                  <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-3 lg:grid-cols-4 gap-2">
-                    {availableSizes.map(({ size: sizeOption, quantity }) => (
-                      <motion.button
-                        key={sizeOption}
-                        onClick={() => setSize(sizeOption)}
-                        className={`p-2 md:p-3 rounded-lg border-2 transition-all duration-200 ${
-                          size === sizeOption
-                            ? 'border-blue-500 bg-blue-600/20 text-blue-300'
-                            : 'border-gray-600 bg-gray-700/50 hover:border-gray-500'
-                        }`}
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
-                      >
-                        <div className="flex flex-col items-center">
-                          <span className="font-semibold text-sm md:text-base">{sizeOption}</span>
-                          <div className="flex items-center gap-1 mt-1">
-                            <Package className="w-2.5 h-2.5 md:w-3 md:h-3" />
-                            <span className="text-xs text-gray-400">{quantity}</span>
-                          </div>
-                        </div>
-                      </motion.button>
-                    ))}
+            {/* Meters Input for Shirting Category */}
+            {isShirtingCategory && (
+              <div className="space-y-2">
+                <Label className="text-white font-semibold text-sm md:text-base flex items-center gap-2">
+                  <Ruler className="w-4 h-4" />
+                  Quantity (Meters):
+                </Label>
+                <div className="flex items-center gap-3">
+                  <Input
+                    type="number"
+                    min="0.5"
+                    max="100"
+                    step="0.5"
+                    value={meters}
+                    onChange={handleMetersChange}
+                    className="bg-gray-700 border-gray-600 text-white w-32"
+                    placeholder="1.0"
+                  />
+                  <span className="text-gray-400 text-sm">meters</span>
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setMeters(Math.max(0.5, meters - 0.5))}
+                      className="h-8 w-8 p-0"
+                    >
+                      -
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setMeters(Math.min(100, meters + 0.5))}
+                      className="h-8 w-8 p-0"
+                    >
+                      +
+                    </Button>
                   </div>
-                  {size && size !== "-" && (
-                    <div className="p-2 md:p-3 bg-gray-700/50 rounded-lg">
-                      <p className="text-xs md:text-sm text-gray-300">
-                        Selected size: <span className="font-semibold text-white">{size}</span>
-                        <span className="text-gray-400 ml-2">({getSelectedSizeQuantity()} available)</span>
-                      </p>
+                </div>
+                <p className="text-xs text-gray-400">
+                  Minimum: 0.5 meters • Maximum: 100 meters
+                </p>
+              </div>
+            )}
+
+            {/* Sizes Section - Hide for shirting category */}
+            {!isShirtingCategory && (
+              <div className="space-y-3">
+                {hasSizes ? (
+                  <div className="space-y-2">
+                    <Label className="text-white font-semibold text-sm md:text-base">Available Sizes:</Label>
+                    <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-3 lg:grid-cols-4 gap-2">
+                      {availableSizes.map(({ size: sizeOption, quantity }) => (
+                        <motion.button
+                          key={sizeOption}
+                          onClick={() => setSize(sizeOption)}
+                          className={`p-2 md:p-3 rounded-lg border-2 transition-all duration-200 ${
+                            size === sizeOption
+                              ? 'border-blue-500 bg-blue-600/20 text-blue-300'
+                              : 'border-gray-600 bg-gray-700/50 hover:border-gray-500'
+                          }`}
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                        >
+                          <div className="flex flex-col items-center">
+                            <span className="font-semibold text-sm md:text-base">{sizeOption}</span>
+                            <div className="flex items-center gap-1 mt-1">
+                              <Package className="w-2.5 h-2.5 md:w-3 md:h-3" />
+                              <span className="text-xs text-gray-400">{quantity}</span>
+                            </div>
+                          </div>
+                        </motion.button>
+                      ))}
                     </div>
-                  )}
-                </div>
-              ) : (
-                <div className="text-gray-400 flex items-center gap-2 text-sm md:text-base">
-                  <Package className="w-4 h-4" />
-                  <span>Size: Not applicable</span>
-                </div>
-              )}
-            </div>
+                    {size && size !== "-" && (
+                      <div className="p-2 md:p-3 bg-gray-700/50 rounded-lg">
+                        <p className="text-xs md:text-sm text-gray-300">
+                          Selected size: <span className="font-semibold text-white">{size}</span>
+                          <span className="text-gray-400 ml-2">({getSelectedSizeQuantity()} available)</span>
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="text-gray-400 flex items-center gap-2 text-sm md:text-base">
+                    <Package className="w-4 h-4" />
+                    <span>Size: Not applicable</span>
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Add to Cart Button */}
             <div className="mt-2">
@@ -332,17 +422,29 @@ const ProductDetailsDialog = ({ open, setOpen, productDetails, handleAddToCart }
                 <Button disabled className="w-full opacity-50 cursor-not-allowed h-10 md:h-12 text-sm md:text-base">
                   Out of Stock
                 </Button>
-              ) : hasSizes && (!size || size === "-") ? (
+              ) : !isShirtingCategory && hasSizes && (!size || size === "-") ? (
                 <Button disabled className="w-full opacity-50 cursor-not-allowed h-10 md:h-12 text-sm md:text-base">
                   Please select a size
                 </Button>
-              ) : hasSizes && getSelectedSizeQuantity() === 0 ? (
+              ) : !isShirtingCategory && hasSizes && getSelectedSizeQuantity() === 0 ? (
                 <Button disabled className="w-full opacity-50 cursor-not-allowed h-10 md:h-12 text-sm md:text-base">
                   Selected size out of stock
                 </Button>
+              ) : isShirtingCategory && (!meters || meters <= 0) ? (
+                <Button disabled className="w-full opacity-50 cursor-not-allowed h-10 md:h-12 text-sm md:text-base">
+                  Please enter valid meters
+                </Button>
               ) : (
                 <Button
-                  onClick={() => handleAddToCart(productDetails._id, hasSizes ? getSelectedSizeQuantity() : productDetails.quantity, size)}
+                  onClick={() => {
+                    if (isShirtingCategory) {
+                      // For shirting, pass totalCost and meters
+                      handleAddToCart(productDetails._id, productDetails.quantity, size || "-", totalCost , meters);
+                    } else {
+                      // For other categories, use existing logic
+                      handleAddToCart(productDetails._id, hasSizes ? getSelectedSizeQuantity() : productDetails.quantity, size);
+                    }
+                  }}
                   className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 h-10 md:h-12 text-sm md:text-base"
                   disabled={!productDetails._id}
                 >

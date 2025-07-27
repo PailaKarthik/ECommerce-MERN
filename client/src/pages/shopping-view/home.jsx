@@ -65,7 +65,7 @@ import UrbanInspire from "../../assets/brands/urban-inspire.jpg";
 //category images
 import Accessories from "../../assets/categories/accessories.jpg";
 import Shirting from "../../assets/categories/shirting.jpeg";
-import Pants from "../../assets/categories/pants.webp";
+import Combo from "../../assets/categories/combo.jpg";
 import MenClothing from "../../assets/categories/men-clothing.webp";
 import Mattress from "../../assets/categories/mattress.avif";
 
@@ -105,12 +105,12 @@ const ShoppingHome = () => {
     () => [
       { id: "men-shirts", label: "Men Shirts", icon: Mars, image: MenClothing },
       {
-        id: "men-pants",
-        label: "Pants",
-        icon: PiPantsLight,
-        image: Pants,
+        id: "combo",
+        label: "Combos",
+        icon: Swords,
+        image: Combo,
       },
-      { id: "men-shirting", label: "Men Shirting", icon: RiShirtLine, image: Shirting },
+      { id: "men-shirting", label: "Shirting & Suiting", icon: RiShirtLine, image: Shirting },
       {
         id: "accessories",
         label: "Accessories",
@@ -196,13 +196,13 @@ const ShoppingHome = () => {
   }, [dispatch]);
 
   // Memoize product derivations to prevent recalculation
-  const trackpantsProducts = React.useMemo(
-    () => productList.filter((product) => product.category === "men-trackpants").slice(0, 8),
+  const MenPantProducts = React.useMemo(
+    () => productList.filter((product) => product.category === "men-pants").slice(0, 8),
     [productList]
   );
 
-  const tshirtsProducts = React.useMemo(
-    () => productList.filter((product) => product.category === "men-tshirts").slice(0, 8),
+  const MenShirtProducts = React.useMemo(
+    () => productList.filter((product) => product.category === "men-shirts").slice(0, 8),
     [productList]
   );
 
@@ -227,15 +227,42 @@ const ShoppingHome = () => {
   );
 
   const handleAddToCart = React.useCallback(
-    (productId, q, size) => {
-      if (size === null) {
-        toast(`Enter the size of the product`, {
-          icon: "❌",
-          duration: 2000,
-          position: "top-center",
-          style: { backgroundColor: "black", color: "white" },
-        });
-        return;
+    (productId, quantity, size, totalCost = null, meters = null) => {
+      // Get product details to check category
+      const product = productList.find(p => p._id === productId);
+      const isShirtingProduct = product?.category === 'men-shirting';
+
+      // For shirting products, validate meters instead of size
+      if (isShirtingProduct) {
+        if (!meters || meters <= 0) {
+          toast("Please enter valid meters for this product", {
+            icon: "❌",
+            duration: 2000,
+            position: "top-center",
+            style: { backgroundColor: "black", color: "white" },
+          });
+          return;
+        }
+        if (!totalCost || totalCost <= 0) {
+          toast("Invalid total cost calculation", {
+            icon: "❌",
+            duration: 2000,
+            position: "top-center",
+            style: { backgroundColor: "black", color: "white" },
+          });
+          return;
+        }
+      } else {
+        // For non-shirting products, validate size
+        if (size === null || size === undefined) {
+          toast("Enter the size of the product", {
+            icon: "❌",
+            duration: 2000,
+            position: "top-center",
+            style: { backgroundColor: "black", color: "white" },
+          });
+          return;
+        }
       }
 
       if (!isAuthenticated) {
@@ -245,21 +272,39 @@ const ShoppingHome = () => {
           position: "top-center",
           style: { backgroundColor: "black", color: "white" },
         });
-        sessionStorage.setItem(
-          "pendingCartItem",
-          JSON.stringify({
-            productId,
-            quantity: q || 1,
-            size,
-          })
-        );
+        
+        // Store pending cart item with appropriate data structure
+        const pendingItem = {
+          productId,
+          quantity: isShirtingProduct ? 1 : (quantity || 1),
+          size: isShirtingProduct ? "-" : size,
+        };
+        
+        if (isShirtingProduct) {
+          pendingItem.totalCost = totalCost;
+          pendingItem.meters = meters;
+        }
+        
+        sessionStorage.setItem("pendingCartItem", JSON.stringify(pendingItem));
         navigate("/auth/login");
         return;
       }
 
-      dispatch(
-        addToCart({ userId: user?.id, productId, quantity: q || 1, size: size })
-      ).then((response) => {
+      // Prepare cart data based on product type
+      const cartData = {
+        userId: user?.id,
+        productId,
+        quantity: isShirtingProduct ? 1 : (quantity || 1),
+        size: isShirtingProduct ? "-" : (size || "-"),
+      };
+
+      // Add shirting-specific fields
+      if (isShirtingProduct) {
+        cartData.totalCost = totalCost;
+        cartData.meters = meters;
+      }
+
+      dispatch(addToCart(cartData)).then((response) => {
         if (response.payload?.success) {
           dispatch(fetchCartItems({ userId: user?.id }));
           toast(response?.payload.message, {
@@ -274,7 +319,7 @@ const ShoppingHome = () => {
         }
       });
     },
-    [dispatch, isAuthenticated, user?.id, navigate]
+    [dispatch, isAuthenticated, user?.id, navigate, productList]
   );
 
   useEffect(() => {
@@ -499,16 +544,16 @@ const ShoppingHome = () => {
         </div>
       </section>
 
-      {/* Trackpants Products */}
+      {/* Mens Pants Products */}
       <section className="lg:px-40 py-6 md:py-12 md:mx-8 lg:mx-16">
         <div className="text-center mb-8">
           <h2 className="text-2xl md:text-3xl font-bold text-gray-200 mb-2">
-            Men's Trackpants
+            Men's Pants
           </h2>
         </div>
 
         <div className="hidden md:grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 gap-4">
-          {trackpantsProducts.map((p) => (
+          {MenPantProducts.map((p) => (
             <ShoppingProductTile
               key={p._id}
               product={p}
@@ -520,7 +565,7 @@ const ShoppingHome = () => {
 
         <div className="md:hidden overflow-x-auto scrollbar-hide">
           <div className="flex gap-2 pb-2" style={{ width: "max-content" }}>
-            {trackpantsProducts.map((p) => (
+            {MenPantProducts.map((p) => (
               <div key={p._id} className="flex-shrink-0 min-w-[36vw]">
                 <ShoppingProductTile
                   product={p}
@@ -534,17 +579,28 @@ const ShoppingHome = () => {
         </div>
       </section>
 
-      {/* T-shirts Products - Mobile Only */}
-      <section className="md:hidden py-6">
+      {/* Mens Shirts Products */}
+      <section className="lg:px-40 py-6 md:py-12 md:mx-8 lg:mx-16">
         <div className="text-center mb-8">
-          <h2 className="text-2xl font-bold text-gray-200 mb-2">
-            Men's T-shirts
+          <h2 className="text-2xl md:text-3xl font-bold text-gray-200 mb-2">
+            Men's Shirts
           </h2>
         </div>
 
-        <div className="overflow-x-auto scrollbar-hide">
+        <div className="hidden md:grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 gap-4">
+          {MenShirtProducts.map((p) => (
+            <ShoppingProductTile
+              key={p._id}
+              product={p}
+              handleGetProductDetails={handleGetProductDetails}
+              handleAddToCart={handleAddToCart}
+            />
+          ))}
+        </div>
+
+        <div className="md:hidden overflow-x-auto scrollbar-hide">
           <div className="flex gap-2 pb-2" style={{ width: "max-content" }}>
-            {tshirtsProducts.map((p) => (
+            {MenShirtProducts.map((p) => (
               <div key={p._id} className="flex-shrink-0 min-w-[36vw]">
                 <ShoppingProductTile
                   product={p}

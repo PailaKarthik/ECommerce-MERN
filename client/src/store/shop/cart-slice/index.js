@@ -8,20 +8,23 @@ const initialState = {
 
 export const addToCart = createAsyncThunk(
   "cart/addToCart",
-  async ({ userId, productId, quantity,size }) => {
-    console.log("from-slice",size)
+  async ({ userId, productId, quantity, size, totalCost, meters }) => {
+    console.log("from-slice", { size, totalCost, meters });
     const response = await axios.post(
       `${import.meta.env.VITE_API_URL}/api/shop/cart/add`,
       {
         userId,
         productId,
         quantity,
-        size
+        size,
+        totalCost,
+        meters
       }
     );
     return response.data;
   }
 );
+
 export const fetchCartItems = createAsyncThunk(
   "cart/fetchCartItems",
   async ({ userId }) => {
@@ -32,15 +35,16 @@ export const fetchCartItems = createAsyncThunk(
   }
 );
 
-export const upadteCartItemQuantity = createAsyncThunk(
+export const updateCartItemQuantity = createAsyncThunk(
   "cart/updateCartItemQuantity",
-  async ({ userId, productId, quantity }) => {
+  async ({ userId, productId, quantity, meters }) => {
     const response = await axios.put(
       `${import.meta.env.VITE_API_URL}/api/shop/cart/update-quantity`,
       {
         userId,
         productId,
         quantity,
+        meters
       }
     );
     return response.data;
@@ -62,7 +66,11 @@ export const deleteCartItem = createAsyncThunk(
 const shoppingCartSlice = createSlice({
   name: "cart",
   initialState,
-  reducers: {},
+  reducers: {
+    clearCart: (state) => {
+      state.cartItems = [];
+    },
+  },
   extraReducers: (builder) => {
     builder
       .addCase(addToCart.pending, (state) => {
@@ -82,19 +90,20 @@ const shoppingCartSlice = createSlice({
       .addCase(fetchCartItems.fulfilled, (state, action) => {
         state.isLoading = false;
         state.cartItems = action.payload.cart;
+        console.log("Cart items fetched:", action.payload.cart);
       })
       .addCase(fetchCartItems.rejected, (state) => {
         state.isLoading = false;
         state.cartItems = [];
       })
-      .addCase(upadteCartItemQuantity.pending, (state) => {
+      .addCase(updateCartItemQuantity.pending, (state) => {
         state.isLoading = true;
       })
-      .addCase(upadteCartItemQuantity.fulfilled, (state, action) => {
+      .addCase(updateCartItemQuantity.fulfilled, (state, action) => {
         state.isLoading = false;
         state.cartItems = action.payload.cart;
       })
-      .addCase(upadteCartItemQuantity.rejected, (state) => {
+      .addCase(updateCartItemQuantity.rejected, (state) => {
         state.isLoading = false;
         state.cartItems = [];
       })
@@ -112,4 +121,5 @@ const shoppingCartSlice = createSlice({
   },
 });
 
+export const { clearCart } = shoppingCartSlice.actions;
 export default shoppingCartSlice.reducer;

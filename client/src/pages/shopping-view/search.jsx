@@ -69,15 +69,42 @@ const SearchProducts = () => {
     }
   }, [keyword, setSearchParams, dispatch, recentSearches]);
 
-  const handleAddToCart = (productId, getTotalStock, size) => {
-    if (size === null) {
-      toast("Enter the size of the product", {
-        icon: "❌",
-        duration: 2000,
-        position: "top-center",
-        style: { backgroundColor: "#1f2937", color: "#f9fafb" },
-      });
-      return;
+  const handleAddToCart = (productId, getTotalStock, size, totalCost = null, meters = null) => {
+    // Get product details to check category
+    const product = searchResults.find(p => p._id === productId);
+    const isShirtingProduct = product?.category === 'men-shirting';
+
+    // For shirting products, validate meters instead of size
+    if (isShirtingProduct) {
+      if (!meters || meters <= 0) {
+        toast("Please enter valid meters for this product", {
+          icon: "❌",
+          duration: 2000,
+          position: "top-center",
+          style: { backgroundColor: "#1f2937", color: "#f9fafb" },
+        });
+        return;
+      }
+      if (!totalCost || totalCost <= 0) {
+        toast("Invalid total cost calculation", {
+          icon: "❌",
+          duration: 2000,
+          position: "top-center",
+          style: { backgroundColor: "#1f2937", color: "#f9fafb" },
+        });
+        return;
+      }
+    } else {
+      // For non-shirting products, validate size
+      if (size === null || size === undefined) {
+        toast("Enter the size of the product", {
+          icon: "❌",
+          duration: 2000,
+          position: "top-center",
+          style: { backgroundColor: "#1f2937", color: "#f9fafb" },
+        });
+        return;
+      }
     }
 
     // Check if user is authenticated
@@ -88,15 +115,20 @@ const SearchProducts = () => {
         position: "top-center",
         style: { backgroundColor: "#1f2937", color: "#f9fafb" },
       });
-      // Store the product details for after login (optional)
-      sessionStorage.setItem(
-        "pendingCartItem",
-        JSON.stringify({
-          productId,
-          quantity: 1,
-          size,
-        })
-      );
+      
+      // Store the product details for after login
+      const pendingItem = {
+        productId,
+        quantity: isShirtingProduct ? 1 : 1,
+        size: isShirtingProduct ? "-" : size,
+      };
+      
+      if (isShirtingProduct) {
+        pendingItem.totalCost = totalCost;
+        pendingItem.meters = meters;
+      }
+      
+      sessionStorage.setItem("pendingCartItem", JSON.stringify(pendingItem));
       navigate("/auth/login");
       return;
     }
@@ -111,25 +143,56 @@ const SearchProducts = () => {
 
       if (indexOfCurrentItem > -1) {
         const getQuantity = getCartItems[indexOfCurrentItem].quantity;
-        if (getQuantity + 1 > getTotalStock) {
-          toast(`Only ${getQuantity} quantity can be added for this item`, {
-            icon: "❌",
-            duration: 2000,
-            position: "top-center",
-            style: {
-              backgroundColor: "#1f2937",
-              color: "#f9fafb",
-            },
-          });
-          return;
+        
+        // For shirting products, check meters instead of quantity
+        if (isShirtingProduct) {
+          const currentMeters = getCartItems[indexOfCurrentItem].meters || 0;
+          if (currentMeters + meters > 100) { // Assuming max 100 meters per product
+            toast(`Maximum 100 meters allowed for this item. Current: ${currentMeters}m`, {
+              icon: "❌",
+              duration: 2000,
+              position: "top-center",
+              style: {
+                backgroundColor: "#1f2937",
+                color: "#f9fafb",
+              },
+            });
+            return;
+          }
+        } else {
+          // For regular products, check stock
+          if (getQuantity + 1 > getTotalStock) {
+            toast(`Only ${getQuantity} quantity can be added for this item`, {
+              icon: "❌",
+              duration: 2000,
+              position: "top-center",
+              style: {
+                backgroundColor: "#1f2937",
+                color: "#f9fafb",
+              },
+            });
+            return;
+          }
         }
       }
     }
 
-    // If user is authenticated, proceed with existing logic
-    dispatch(
-      addToCart({ userId: user?.id, productId, quantity: 1, size: size })
-    ).then((response) => {
+    // Prepare cart data based on product type
+    const cartData = {
+      userId: user?.id,
+      productId,
+      quantity: isShirtingProduct ? 1 : 1,
+      size: isShirtingProduct ? "-" : size,
+    };
+
+    // Add shirting-specific fields
+    if (isShirtingProduct) {
+      cartData.totalCost = totalCost;
+      cartData.meters = meters;
+    }
+
+    // If user is authenticated, proceed with adding to cart
+    dispatch(addToCart(cartData)).then((response) => {
       if (response.payload?.success) {
         dispatch(fetchCartItems({ userId: user?.id }));
         toast(response?.payload.message, {

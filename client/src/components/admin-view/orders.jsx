@@ -160,8 +160,8 @@ const AdminOrdersList = () => {
       className="w-full"
     >
       <Card className="bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-gray-100 border border-gray-700/50 shadow-2xl shadow-gray-900/50 backdrop-blur-sm">
-        <CardHeader className="pb-6">
-          <CardTitle className="text-xl md:text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent flex items-center gap-2 mb-6">
+        <CardHeader className="md:pb-3">
+          <CardTitle className="text-xl md:text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent flex items-center gap-2 mb-2 md:mb-4">
             <Package className="w-6 h-6 text-blue-400" />
             Orders Management
           </CardTitle>
@@ -178,7 +178,7 @@ const AdminOrdersList = () => {
                   key={filter.key}
                   onClick={() => setActiveFilter(filter.key)}
                   className={`
-                    relative px-4 py-3 rounded-xl font-semibold text-sm transition-all duration-300 flex flex-col items-center gap-1 min-w-[120px]
+                    relative py-1 md:px-4 md:py-3 rounded-xl font-semibold text-sm transition-all duration-300 flex flex-col items-center gap-1 min-w-[120px]
                     ${
                       isActive
                         ? `bg-gradient-to-r ${filter.color} text-white shadow-lg transform scale-105`

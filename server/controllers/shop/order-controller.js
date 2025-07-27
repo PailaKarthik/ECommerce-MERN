@@ -1,7 +1,7 @@
 // controllers/razorpayController.js
 const crypto = require("crypto");
 const { buildClient } = require("../../helpers/razorpay");
-const Order = require("../../models/Orders");
+const Order = require("../../models/Order");
 const Cart = require("../../models/Cart");
 const Product = require("../../models/Product");
 const User = require("../../models/User");
@@ -110,6 +110,10 @@ exports.createOrder = async (req, res) => {
         price: i.price,
         quantity: i.quantity,
         size: i.size,
+        totalCost: i.totalCost,
+        meters: i.meters,
+        category: i.category, 
+        pricePerMeter: i.pricePerMeter,
       })),
       addressInfo,
       orderStatus: "PENDING",

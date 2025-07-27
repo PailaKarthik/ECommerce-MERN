@@ -7,19 +7,55 @@ import { useNavigate } from "react-router";
 
 const UserCartWrapper = ({ cartItems, setOpenCartSheet }) => {
   const navigate = useNavigate();
-  const totalCartAmount =
-    cartItems &&
-    cartItems.items &&
-    cartItems.items.length > 0 &&
-    cartItems.items.reduce(
-      (acc, curr) =>
-        acc + (curr.sellPrice > 0 ? curr.sellPrice : curr.price) * curr.quantity,
-      0
-    );
+  
+  // Enhanced total calculation that handles both regular products and shirting products
+  const totalCartAmount = React.useMemo(() => {
+    if (!cartItems?.items?.length) return 0;
+    
+    return cartItems.items.reduce((acc, curr) => {
+      // For shirting products, use totalCost if available
+      if (curr.category === 'men-shirting' && curr.totalCost) {
+        return acc + curr.totalCost;
+      }
+      
+      // For regular products, calculate based on price and quantity
+      const itemPrice = curr.sellPrice > 0 ? curr.sellPrice : curr.price;
+      return acc + (itemPrice * curr.quantity);
+    }, 0);
+  }, [cartItems?.items]);
 
   const itemCount = cartItems?.items?.length || 0;
 
-  console.log(cartItems);
+  // Calculate item breakdown for debugging
+  const itemBreakdown = React.useMemo(() => {
+    if (!cartItems?.items?.length) return [];
+    
+    return cartItems.items.map(item => {
+      const isShirting = item.category === 'men-shirting';
+      
+      if (isShirting && item.totalCost) {
+        return {
+          title: item.title,
+          type: 'shirting',
+          quantity: `${item.meters}m`,
+          unitPrice: item.totalCost / item.meters,
+          total: item.totalCost
+        };
+      }
+      
+      return {
+        title: item.title,
+        type: 'regular',
+        quantity: item.quantity,
+        unitPrice: item.sellPrice > 0 ? item.sellPrice : item.price,
+        total: (item.sellPrice > 0 ? item.sellPrice : item.price) * item.quantity
+      };
+    });
+  }, [cartItems?.items]);
+
+  console.log("Cart Items:", cartItems);
+  console.log("Item Breakdown:", itemBreakdown);
+  console.log("Total Cart Amount:", totalCartAmount);
   
   return (
     <SheetContent className="sm:max-w-lg bg-gradient-to-b from-gray-900 to-gray-800 text-gray-100 border-gray-700 max-h-screen flex flex-col shadow-2xl">
@@ -62,12 +98,35 @@ const UserCartWrapper = ({ cartItems, setOpenCartSheet }) => {
       {/* Footer: total and checkout section */}
       {cartItems && cartItems.items && cartItems.items.length > 0 && (
         <div className="flex-shrink-0 px-2 py-2 md:py-4 border-t border-gray-700 bg-gray-900/50 backdrop-blur-sm">
+          {/* Item Breakdown - Development mode only */}
+          {import.meta.env.NODE_ENV === 'development' && (
+            <div className="mb-2 p-2 bg-gray-800/30 rounded text-xs">
+              <details>
+                <summary className="text-gray-400 cursor-pointer">Debug: Item Breakdown</summary>
+                <div className="mt-1 space-y-1">
+                  {itemBreakdown.map((item, index) => (
+                    <div key={index} className="text-gray-300">
+                      {item.title}: {item.quantity} × ₹{item.unitPrice.toFixed(2)} = ₹{item.total.toFixed(2)} ({item.type})
+                    </div>
+                  ))}
+                  <div className="font-bold text-green-400 pt-1 border-t border-gray-600">
+                    Total: ₹{totalCartAmount.toFixed(2)}
+                  </div>
+                </div>
+              </details>
+            </div>
+          )}
+
           {/* Subtotal */}
           <div className="flex justify-between items-center mb-2 md:mb-4 p-1 md:p-3 bg-gray-800/50 rounded-lg">
             <div className="flex flex-col">
               <span className="text-gray-400 text-sm">Subtotal</span>
               <span className="font-bold text-lg lg:text-xl text-gray-100">
                 ₹{totalCartAmount ? totalCartAmount.toFixed(2) : "0.00"}
+              </span>
+              {/* Show item count breakdown */}
+              <span className="text-gray-500 text-xs mt-1">
+                {itemCount} {itemCount === 1 ? 'item' : 'items'}
               </span>
             </div>
             <div className="text-right">
@@ -78,6 +137,25 @@ const UserCartWrapper = ({ cartItems, setOpenCartSheet }) => {
               <span className="text-gray-500 text-xs">Tax included</span>
             </div>
           </div>
+
+          {/* Price breakdown for mixed cart */}
+          {itemBreakdown.some(item => item.type === 'shirting') && itemBreakdown.some(item => item.type === 'regular') && (
+            <div className="mb-2 p-2 bg-gray-800/30 rounded-lg">
+              <div className="text-xs text-gray-400 mb-1">Order includes:</div>
+              <div className="space-y-1 text-xs">
+                {itemBreakdown.filter(item => item.type === 'regular').length > 0 && (
+                  <div className="text-gray-300">
+                    • {itemBreakdown.filter(item => item.type === 'regular').length} regular item(s)
+                  </div>
+                )}
+                {itemBreakdown.filter(item => item.type === 'shirting').length > 0 && (
+                  <div className="text-gray-300">
+                    • {itemBreakdown.filter(item => item.type === 'shirting').reduce((acc, item) => acc + parseFloat(item.quantity), 0)}m fabric item(s)
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Checkout Button */}
           <Button

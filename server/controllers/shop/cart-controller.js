@@ -3,8 +3,8 @@ const Product = require("../../models/Product");
 
 const addToCart = async (req, res) => {
   try {
-    const { userId, productId, quantity,size } = req.body;
-    console.log(size)
+    const { userId, productId, quantity, size, totalCost, meters } = req.body;
+    console.log("Cart data:", { size, totalCost, meters });
 
     if (!userId || !productId || quantity <= 0) {
       return res.status(400).json({
@@ -31,9 +31,25 @@ const addToCart = async (req, res) => {
     );
 
     if (existingItemIndex > -1) {
-      cart.items[existingItemIndex].quantity += quantity;
+      // For shirting products, update meters and recalculate totalCost
+      if (meters !== null && meters !== undefined) {
+        cart.items[existingItemIndex].meters += meters;
+        // Recalculate totalCost based on new meters
+        const basePrice =
+          findProduct.sellPrice > 0 ? findProduct.sellPrice : findProduct.price;
+        cart.items[existingItemIndex].totalCost =
+          basePrice * cart.items[existingItemIndex].meters;
+      } else {
+        cart.items[existingItemIndex].quantity += quantity;
+      }
     } else {
-      cart.items.push({ productId, quantity,size});
+      cart.items.push({
+        productId,
+        quantity,
+        size: size || "-",
+        totalCost: totalCost || null,
+        meters: meters || null,
+      });
     }
 
     await cart.save();
@@ -62,7 +78,6 @@ const fetchCartItems = async (req, res) => {
       });
     }
 
-    // Find the cart without populate first
     const cart = await Cart.findOne({ userId });
     if (!cart) {
       return res.status(404).json({
@@ -71,10 +86,9 @@ const fetchCartItems = async (req, res) => {
       });
     }
 
-    // Properly await populate - only images field exists
     await cart.populate({
       path: "items.productId",
-      select: "title price images sellPrice",
+      select: "title price images sellPrice category",
     });
 
     // Remove any items where product was deleted
@@ -82,24 +96,25 @@ const fetchCartItems = async (req, res) => {
     if (validItems.length < cart.items.length) {
       cart.items = validItems;
       await cart.save();
-      // repopulate after save if needed
       await cart.populate({
         path: "items.productId",
-        select: "title price images sellPrice",
+        select: "title price images sellPrice category",
       });
     }
 
     const populateCartItems = validItems.map((item) => ({
       productId: item.productId._id,
-      images: item.productId.images, // Only images array exists
+      images: item.productId.images,
       title: item.productId.title,
       price: item.productId.price,
       sellPrice: item.productId.sellPrice,
+      category: item.productId.category,
       quantity: item.quantity,
-      size : item.size,
+      size: item.size || "-",
+      totalCost: item.totalCost,
+      meters: item.meters,
     }));
 
-    // Return exactly as before, but now items[].productId is populated object
     return res.status(200).json({
       success: true,
       message: "Cart items fetched successfully",
@@ -119,12 +134,12 @@ const fetchCartItems = async (req, res) => {
 
 const updateCartItemQuantity = async (req, res) => {
   try {
-    const { userId, productId, quantity } = req.body;
-    
-    if (!userId || !productId || !quantity) {
+    const { userId, productId, quantity, meters } = req.body;
+
+    if (!userId || !productId || (!quantity && !meters)) {
       return res.status(400).json({
         success: false,
-        message: "User ID, Product ID, and Quantity are required",
+        message: "User ID, Product ID, and Quantity or Meters are required",
       });
     }
 
@@ -147,30 +162,46 @@ const updateCartItemQuantity = async (req, res) => {
       });
     }
 
-    cart.items[existingItemIndex].quantity = quantity;
+    // Update quantity or meters based on product type
+    if (meters !== undefined && meters !== null) {
+      cart.items[existingItemIndex].meters = meters;
+
+      // Recalculate totalCost for shirting products
+      const product = await Product.findById(productId);
+      if (product && product.category === "men-shirting") {
+        const basePrice = product.sellPrice > 0 ? product.sellPrice : product.price;
+        cart.items[existingItemIndex].totalCost = basePrice * meters;
+      }
+    } else {
+      cart.items[existingItemIndex].quantity = quantity;
+    }
+
     await cart.save();
 
     await cart.populate({
       path: "items.productId",
-      select: "title price images sellPrice",
+      select: "title price images sellPrice category",
     });
 
     const populateCartItems = cart.items.map((item) => ({
       productId: item.productId ? item.productId._id : null,
-      images: item.productId ? item.productId.images : null, // Only images array
+      images: item.productId ? item.productId.images : null,
       title: item.productId ? item.productId.title : "Product not found",
       price: item.productId ? item.productId.price : null,
       sellPrice: item.productId ? item.productId.sellPrice : null,
+      category: item.productId ? item.productId.category : null,
       quantity: item.quantity,
-      size : item.size ? item.size : ""
+      size: item.size || "-",
+      totalCost: item.totalCost,
+      meters: item.meters,
     }));
 
     return res.status(200).json({
       success: true,
-      message: "Cart item quantity updated successfully",
+      message: "Cart item updated successfully",
       cart: {
         ...cart._doc,
-        items : populateCartItems
+        items: populateCartItems,
       },
     });
   } catch (e) {
@@ -217,17 +248,20 @@ const deleteCartItem = async (req, res) => {
     await cart.save();
     await cart.populate({
       path: "items.productId",
-      select: "title price images sellPrice",
+      select: "title price images sellPrice category",
     });
 
     const populateCartItems = cart.items.map((item) => ({
       productId: item.productId ? item.productId._id : null,
-      images: item.productId ? item.productId.images : null, // Only images array
+      images: item.productId ? item.productId.images : null,
       title: item.productId ? item.productId.title : "Product not found",
       price: item.productId ? item.productId.price : null,
       sellPrice: item.productId ? item.productId.sellPrice : null,
+      category: item.productId ? item.productId.category : null,
       quantity: item.quantity,
-      size : item.size ? item.size : ""
+      size: item.size || "-",
+      totalCost: item.totalCost,
+      meters: item.meters,
     }));
 
     return res.status(200).json({
@@ -235,7 +269,7 @@ const deleteCartItem = async (req, res) => {
       message: "Item deleted from cart successfully",
       cart: {
         ...cart._doc,
-        items : populateCartItems
+        items: populateCartItems,
       },
     });
   } catch (e) {

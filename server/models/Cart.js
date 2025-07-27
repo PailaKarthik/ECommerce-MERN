@@ -19,9 +19,15 @@ const cartSchema = new mongoose.Schema(
           required: true,
           min: 1,
         },
-        size : {
-          type : String,
-        }
+        size: {
+          type: String,
+        },
+        totalCost: {
+          type: Number,
+        },
+        meters: {
+          type: Number,
+        },
       },
     ],
   },

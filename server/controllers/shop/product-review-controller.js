@@ -1,4 +1,4 @@
-const Order = require("../../models/Orders");
+const Order = require("../../models/Order");
 const Product = require("../../models/Product");
 const ProductReview = require("../../models/Review");
 

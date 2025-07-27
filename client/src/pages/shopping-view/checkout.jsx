@@ -16,13 +16,46 @@ const ShoppingCheckout = () => {
   const [currentSelectedAddress, setCurrentSelectedAddress] = useState(null);
   const dispatch = useDispatch();
 
-  const totalCartAmount =
-    cartItems?.items?.reduce(
-      (acc, curr) =>
-        acc +
-        (curr.sellPrice > 0 ? curr.sellPrice : curr.price) * curr.quantity,
-      0
-    ) || 0;
+  // Calculate total cart amount with proper handling for shirting products
+  const totalCartAmount = React.useMemo(() => {
+    if (!cartItems?.items?.length) return 0;
+    
+    return cartItems.items.reduce((acc, curr) => {
+      // For shirting products, use totalCost if available
+      if (curr.category === 'men-shirting' && curr.totalCost) {
+        return acc + curr.totalCost;
+      }
+      
+      // For regular products, use the existing logic
+      const itemPrice = curr.sellPrice > 0 ? curr.sellPrice : curr.price;
+      return acc + (itemPrice * curr.quantity);
+    }, 0);
+  }, [cartItems?.items]);
+
+  // Calculate item breakdown for display
+  const getItemBreakdown = () => {
+    return cartItems?.items?.map(item => {
+      const isShirting = item.category === 'men-shirting';
+      
+      if (isShirting && item.totalCost) {
+        return {
+          ...item,
+          displayPrice: item.totalCost,
+          displayQuantity: `${item.meters}m`,
+          unitPrice: item.totalCost / item.meters,
+        };
+      }
+      
+      return {
+        ...item,
+        displayPrice: (item.sellPrice > 0 ? item.sellPrice : item.price) * item.quantity,
+        displayQuantity: item.quantity,
+        unitPrice: item.sellPrice > 0 ? item.sellPrice : item.price,
+      };
+    }) || [];
+  };
+
+  const itemBreakdown = getItemBreakdown();
 
   const handlePayment = async () => {
     if (!currentSelectedAddress) {
@@ -32,60 +65,99 @@ const ShoppingCheckout = () => {
       return toast("Your cart is empty", { icon: "🥲" });
     }
 
-    // 1) create order on backend
-    const payload = await dispatch(
-      createNewOrder({
-        userId: user?.id,
-        cartId: cartItems?._id,
-        cartItems: cartItems.items.map((item) => ({
-          productId: item.productId,
-          title: item.title,
-          image: item.image,
-          price: item.sellPrice > 0 ? item.sellPrice : item.price,
-          quantity: item.quantity,
-          size: item.size,
-        })),
-        addressInfo: {
-          addressId: currentSelectedAddress._id,
-          address: currentSelectedAddress.address,
-          city: currentSelectedAddress.city,
-          pincode: currentSelectedAddress.pincode,
-          phone: currentSelectedAddress.phone,
-          notes: currentSelectedAddress.notes,
-        },
-        totalAmount: totalCartAmount,
-      })
-    ).unwrap();
+    // Prepare cart items with proper structure for both product types
+    const orderCartItems = cartItems.items.map((item) => {
+      const baseItem = {
+        productId: item.productId,
+        title: item.title,
+        image: item.images?.[0] || item.image || "", // Handle images array
+        price: item.sellPrice > 0 ? item.sellPrice : item.price,
+        quantity: item.quantity,
+        size: item.size || "-",
+        category: item.category,
+      };
 
-    console.log(payload);
-    // 2) configure and open Razorpay
-    const options = {
-      key: import.meta.env.VITE_RAZORPAY_KEY_ID,
-      amount: payload.amount, // paise
-      currency: payload.currency, // "INR"
-      order_id: payload.razorpayOrderId,
-      handler: async (resp) => {
-        // 3) capture on backend
-        await dispatch(
-          capturePayment({
-            orderId: payload.orderId,
-            razorpayPaymentId: resp.razorpay_payment_id,
-            razorpaySignature: resp.razorpay_signature,
-            razorpayOrderId: resp.razorpay_order_id,
-          })
-        ).unwrap();
-        // 4) navigate to a confirmation page:
-        window.location.href = `/shop/razorpay-success`;
-      },
-      modal: {
-        ondismiss: () => toast("Payment cancelled", { icon: "⚠️" }),
-      },
-      prefill: {
-        name: user.name,
-        email: user.email,
-      },
-    };
-    new window.Razorpay(options).open();
+      // Add shirting-specific fields if applicable
+      if (item.category === 'men-shirting') {
+        baseItem.totalCost = item.totalCost;
+        baseItem.meters = item.meters;
+        baseItem.pricePerMeter = item.totalCost / item.meters; // Calculate per meter price
+      }
+
+      return baseItem;
+    });
+
+    try {
+      // 1) Create order on backend
+      const payload = await dispatch(
+        createNewOrder({
+          userId: user?.id,
+          cartId: cartItems?._id,
+          cartItems: orderCartItems,
+          addressInfo: {
+            addressId: currentSelectedAddress._id,
+            address: currentSelectedAddress.address,
+            city: currentSelectedAddress.city,
+            pincode: currentSelectedAddress.pincode,
+            phone: currentSelectedAddress.phone,
+            notes: currentSelectedAddress.notes,
+          },
+          totalAmount: totalCartAmount,
+        })
+      ).unwrap();
+
+      console.log("Order payload:", payload);
+
+      // 2) Configure and open Razorpay
+      const options = {
+        key: import.meta.env.VITE_RAZORPAY_KEY_ID,
+        amount: payload.amount, // paise
+        currency: payload.currency, // "INR"
+        order_id: payload.razorpayOrderId,
+        name: "Your Store Name",
+        description: "Purchase from your store",
+        handler: async (resp) => {
+          try {
+            // 3) Capture payment on backend
+            await dispatch(
+              capturePayment({
+                orderId: payload.orderId,
+                razorpayPaymentId: resp.razorpay_payment_id,
+                razorpaySignature: resp.razorpay_signature,
+                razorpayOrderId: resp.razorpay_order_id,
+              })
+            ).unwrap();
+            
+            // 4) Navigate to confirmation page
+            window.location.href = `/shop/razorpay-success`;
+          } catch (error) {
+            console.error("Payment capture failed:", error);
+            toast("Payment verification failed. Please contact support.", { 
+              icon: "❌",
+              duration: 5000 
+            });
+          }
+        },
+        modal: {
+          ondismiss: () => toast("Payment cancelled", { icon: "⚠️" }),
+        },
+        prefill: {
+          name: user.username || user.name,
+          email: user.email,
+        },
+        theme: {
+          color: "#3B82F6", // Blue theme to match your site
+        },
+      };
+      
+      new window.Razorpay(options).open();
+    } catch (error) {
+      console.error("Order creation failed:", error);
+      toast("Failed to create order. Please try again.", { 
+        icon: "❌",
+        duration: 5000 
+      });
+    }
   };
 
   return (
@@ -128,7 +200,7 @@ const ShoppingCheckout = () => {
                       <div key={i} className="border-b border-gray-700 pb-3 last:border-b-0">
                         <UserCartItemsContent
                           cartItem={cartItem}
-                          mode="dark"
+                          mode="checkout" // Pass checkout mode to disable editing
                         />
                       </div>
                     ))
@@ -139,6 +211,28 @@ const ShoppingCheckout = () => {
                   )}
                 </div>
 
+                {/* Detailed Item Breakdown */}
+                {cartItems?.items?.length > 0 && (
+                  <div className="mt-4 pt-4 border-t border-gray-700">
+                    <h3 className="text-sm font-medium text-gray-300 mb-3">Order Details</h3>
+                    <div className="space-y-2 text-xs sm:text-sm">
+                      {itemBreakdown.map((item, index) => (
+                        <div key={index} className="flex justify-between text-gray-400">
+                          <span className="truncate mr-2">
+                            {item.title} 
+                            {item.category === 'men-shirting' ? 
+                              ` (${item.displayQuantity})` : 
+                              ` (${item.displayQuantity} × ₹${item.unitPrice})`
+                            }
+                            {item.size && item.size !== "-" && ` - ${item.size}`}
+                          </span>
+                          <span className="flex-shrink-0">₹{item.displayPrice.toFixed(2)}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 {/* Total Section */}
                 {cartItems?.items?.length > 0 && (
                   <>
@@ -146,7 +240,7 @@ const ShoppingCheckout = () => {
                       <div className="space-y-2 text-sm sm:text-base">
                         <div className="flex justify-between text-gray-300">
                           <span>Subtotal</span>
-                          <span>₹{totalCartAmount}.00</span>
+                          <span>₹{totalCartAmount.toFixed(2)}</span>
                         </div>
                         <div className="flex justify-between text-gray-300">
                           <span>Shipping</span>
@@ -162,7 +256,7 @@ const ShoppingCheckout = () => {
                         <div className="flex justify-between items-center">
                           <span className="text-lg sm:text-xl font-bold text-white">Total</span>
                           <span className="text-lg sm:text-xl font-bold text-green-400">
-                            ₹{totalCartAmount}.00
+                            ₹{totalCartAmount.toFixed(2)}
                           </span>
                         </div>
                       </div>
@@ -173,7 +267,7 @@ const ShoppingCheckout = () => {
                       <Button
                         onClick={handlePayment}
                         className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold py-3 sm:py-4 text-base sm:text-lg rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl"
-                        disabled={isLoading || !cartItems?.items?.length}
+                        disabled={isLoading || !cartItems?.items?.length || !currentSelectedAddress}
                       >
                         {isLoading ? (
                           <div className="flex items-center gap-2">
@@ -183,10 +277,17 @@ const ShoppingCheckout = () => {
                         ) : (
                           <div className="flex items-center justify-center gap-2">
                             <IndianRupee className="h-5 w-5" />
-                            <span>Checkout with Razorpay</span>
+                            <span>Pay ₹{totalCartAmount.toFixed(2)}</span>
                           </div>
                         )}
                       </Button>
+                      
+                      {/* Validation Messages */}
+                      {!currentSelectedAddress && (
+                        <p className="mt-2 text-xs text-orange-400 text-center">
+                          Please select a delivery address to continue
+                        </p>
+                      )}
                       
                       {/* Security Info */}
                       <div className="mt-3 text-center">

@@ -12,6 +12,10 @@ const OrderSchema = new mongoose.Schema({
       price: String,
       quantity: Number,
       size : String,
+      totalCost : Number,
+      meters : Number,
+      category: String,
+      pricePerMeter: Number,
     },
   ],
   addressInfo: {

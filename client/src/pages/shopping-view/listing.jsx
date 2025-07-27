@@ -31,7 +31,7 @@ const ShoppingLists = () => {
     (state) => state.shoppingProducts
   );
   const { cartItems } = useSelector((state) => state.shoppingCart);
-  const { user, isAuthenticated } = useSelector((state) => state.auth); // Add isAuthenticated
+  const { user } = useSelector((state) => state.auth); // Add isAuthenticated
 
   // Helper to parse filters from URL search params
   const parseFiltersFromSearch = useCallback(() => {
@@ -183,69 +183,60 @@ const ShoppingLists = () => {
     dispatch(fetchProductDetails(productId));
   };
 
-  const handleAddToCart = (productId, getTotalStock, size) => {
-    console.log("size", size);
-    
-    if (size === null) {
-      toast(`Enter the size of the product`, {
-        icon: "❌",
-        duration: 2000,
-        position: "top-center",
-        style: { backgroundColor: "#1f2937", color: "#f9fafb" },
-      });
-      return;
-    }
+  const handleAddToCart = (getCurrentProductId, getTotalStock, selectedSize, totalCost = null, meters = null) => {
+    console.log("cartItems", cartItems);
+    console.log("totalCost and meters", totalCost,meters);
+    let getCartItems = cartItems.items || [];
 
-    // Check if user is authenticated
-    if (!isAuthenticated) {
-      toast("Please login to add items to cart", {
-        icon: "🔒",
-        duration: 2000,
-        position: "top-center",
-        style: { backgroundColor: "#1f2937", color: "#f9fafb" },
-      });
-      // Store the product details for after login (optional)
-      sessionStorage.setItem('pendingCartItem', JSON.stringify({
-        productId,
-        quantity: 1,
-        size
-      }));
-      navigate('/auth/login');
-      return;
-    }
-
-    // Check stock availability for authenticated users
-    let items = cartItems.items || [];
-    if (items.length) {
-      const idx = items.findIndex((item) => item.productId == productId);
-      if (idx > -1) {
-        const qty = items[idx].quantity;
-        if (qty + 1 > getTotalStock) {
-          toast(`Only ${qty} quantity can be added for this item`, {
-            icon: "❌",
-            duration: 2000,
-            position: "top-center",
-            style: { backgroundColor: "#1f2937", color: "#f9fafb" },
+    if (getCartItems.length) {
+      const indexOfCurrentItem = getCartItems.findIndex(
+        (item) => item.productId === getCurrentProductId
+      );
+      if (indexOfCurrentItem > -1) {
+        const getQuantity = getCartItems[indexOfCurrentItem].quantity;
+        if (getQuantity + 1 > getTotalStock) {
+          toast(`Only ${getQuantity} quantity can be added for this item`, {
+            variant: "destructive",
           });
+
           return;
         }
       }
     }
 
-    // If user is authenticated, proceed with existing logic
-    dispatch(addToCart({ userId: user?.id, productId, quantity: 1, size: size })).then(
-      (response) => {
-        if (response.payload?.success) {
-          dispatch(fetchCartItems({ userId: user?.id }));
-          toast(response.payload.message, {
-            icon: "✅",
-            duration: 1000,
-            position: "top-center",
-            style: { backgroundColor: "#065f46", color: "#f9fafb" },
-          });
+    // For shirting category with meters and total cost
+    if (totalCost !== null && meters !== null) {
+      dispatch(
+        addToCart({
+          userId: user?.id,
+          productId: getCurrentProductId,
+          quantity: 1, // Always 1 for shirting since quantity is in meters
+          size: selectedSize || "-",
+          totalCost: totalCost,
+          meters: meters
+        })
+      ).then((data) => {
+        if (data?.payload?.success) {
+          dispatch(fetchCartItems(user?.id));
+          toast("Product is added to cart");
         }
-      }
-    );
+      });
+    } else {
+      // Original logic for other categories
+      dispatch(
+        addToCart({
+          userId: user?.id,
+          productId: getCurrentProductId,
+          quantity: 1,
+          size: selectedSize || "-",
+        })
+      ).then((data) => {
+        if (data?.payload?.success) {
+          dispatch(fetchCartItems(user?.id));
+          toast("Product is added to cart");
+        }
+      });
+    }
   };
 
   // Open product details dialog when details arrive
